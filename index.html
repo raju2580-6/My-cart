@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>my Cart – Buy from Amazon & Flipkart in Nepal</title>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700&family=Hind:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--red:#c8102e;--navy:#10264a;--sand:#f7f3ec;--ink:#1b1b1b;--line:#ddd5c6}
+*{box-sizing:border-box}body{margin:0;font:16px/1.5 Hind,system-ui,sans-serif;color:var(--ink);background:var(--sand)}
+h1,h2,h3,.logo{font-family:'Baloo 2',sans-serif;margin:0}
+header{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;background:var(--navy);color:#fff;position:sticky;top:0;z-index:5}
+.logo{font-size:24px;color:#fff;text-decoration:none}.logo b{color:#ff6b7f}
+nav a{color:#fff;margin-left:14px;text-decoration:none;font-size:15px}
+main{max-width:760px;margin:0 auto;padding:20px 16px 90px}
+.hero{background:var(--red);color:#fff;padding:28px 20px;border-radius:14px;margin-bottom:20px}
+.hero h1{font-size:32px;line-height:1.15}.hero p{margin:8px 0 0}
+.card{background:#fff;border:1px solid var(--line);border-radius:10px;padding:16px;margin-bottom:14px}
+label{display:block;font-weight:500;margin:10px 0 4px}
+input,textarea,select{width:100%;padding:10px;border:1px solid var(--line);border-radius:8px;font:inherit;background:#fff}
+button,.btn{background:var(--navy);color:#fff;border:0;border-radius:8px;padding:11px 18px;font:500 16px Hind,sans-serif;cursor:pointer;text-decoration:none;display:inline-block;margin-top:12px}
+button.red{background:var(--red)}button.ghost,.btn.ghost{background:none;color:var(--navy);border:1px solid var(--navy)}
+:focus-visible{outline:3px solid #f2a900;outline-offset:2px}
+.tag{display:inline-block;padding:2px 10px;border-radius:99px;background:#e8eef9;font-size:13px}
+.st{background:#fff0c2}.st.Delivered{background:#d6f1dc}.st.Cancelled{background:#f6d4d4}
+.row{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center}
+.muted{color:#666;font-size:14px}.err{color:var(--red);margin-top:8px}
+.steps{display:flex;gap:4px;flex-wrap:wrap;margin-top:8px}.steps span{font-size:12px;padding:2px 8px;border-radius:6px;background:#eee}.steps .on{background:var(--navy);color:#fff}
+.fab{position:fixed;right:14px;bottom:14px;display:flex;flex-direction:column;align-items:flex-end;gap:8px;z-index:9}
+.fab a,.fab button{margin:0;box-shadow:0 2px 8px #0003;border-radius:99px}
+.wa{background:#1fa855}
+#chat{display:none;width:min(340px,calc(100vw - 28px));height:380px;background:#fff;border:1px solid var(--line);border-radius:12px;flex-direction:column;box-shadow:0 4px 16px #0003}
+#chat.open{display:flex}#msgs{flex:1;overflow:auto;padding:10px}
+.m{margin:6px 0;padding:8px 10px;border-radius:10px;max-width:88%;white-space:pre-wrap}.m.u{background:var(--navy);color:#fff;margin-left:auto}.m.a{background:#eee}
+#chat form{display:flex;gap:6px;padding:8px;border-top:1px solid var(--line)}#chat input{flex:1}#chat button{margin:0}
+</style></head><body>
+<header><a class="logo" href="#home">my<b>Cart</b></a><nav id="nav"></nav></header>
+<main id="app"></main>
+<div class="fab">
+  <div id="chat"><div id="msgs"><div class="m a">नमस्ते! Ask me about products, ordering or Cash on Delivery.</div></div>
+    <form onsubmit="return ask(event)"><input id="q" placeholder="Type your question" aria-label="Question" required><button class="red">Send</button></form></div>
+  <button class="red" onclick="chat.classList.toggle('open')">AI assistant</button>
+  <a class="btn wa" id="wa" target="_blank" rel="noopener">WhatsApp support</a>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script>
+const SB_URL='https://dgmcsadmhbwibhcbhksf.supabase.co', SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRnbWNzYWRtaGJ3aWJoY2Joa3NmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTQwMzc0MzIsImV4cCI6MjEwOTYxMzQzMn0.ReE33H21g3YHQmTFN45Mw_eRrOYpp4cBBLrv_rteJc4', WA_NUMBER='9779713952940';
+const sb=supabase.createClient(SB_URL,SB_KEY);
+const STATUSES=['Requested','Quoted','Confirmed','Ordered','Shipped','Delivered','Cancelled'];
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+let user=null,profile=null,isAdmin=false;
+$('#wa').href='https://wa.me/'+WA_NUMBER+'?text='+encodeURIComponent('Hello my Cart, I need help.');
+
+async function setUser(u){user=u||null;profile=null;isAdmin=false;
+  if(user){const {data}=await sb.from('profiles').select('*').eq('id',user.id).maybeSingle();profile=data;isAdmin=!!data?.is_admin}
+  render()}
+sb.auth.getSession().then(({data})=>setUser(data.session?.user));
+sb.auth.onAuthStateChange((e,s)=>{if(e!=='TOKEN_REFRESHED')setUser(s?.user)});
+addEventListener('hashchange',render);
+
+function nav(){$('#nav').innerHTML=user?`<a href="#home">Home</a><a href="#orders">My orders</a>${isAdmin?'<a href="#admin">Admin</a>':''}<a href="#" onclick="sb.auth.signOut();location.hash='home';return false">Logout</a>`:`<a href="#login">Login</a><a href="#register">Register</a>`}
+function storeOf(u){try{const h=new URL(u).hostname;return /amazon\./.test(h)||/amzn\./.test(h)?'Amazon':/flipkart\.|fkrt\./.test(h)?'Flipkart':h.replace('www.','')}catch{return null}}
+
+function render(){nav();const v=(location.hash||'#home').slice(1);
+  const f={home,login:()=>authView(0),register:()=>authView(1),orders,admin}[v]||home;f()}
+
+function home(){$('#app').innerHTML=`
+<div class="hero"><h1>Paste any product link.<br>We deliver it to your door in Nepal.</h1>
+<p>Amazon, Flipkart or any online store. Pay Cash on Delivery.</p></div>
+<form class="card" onsubmit="return submitOrder(event)">
+<h2>Request a product</h2>
+<label>Product link</label><input name="url" type="url" required placeholder="https://www.amazon.in/…">
+<label>Product name (optional)</label><input name="name">
+<div class="row"><div style="flex:1"><label>Quantity</label><input name="qty" type="number" min="1" max="20" value="1"></div>
+<div style="flex:2"><label>Phone / WhatsApp</label><input name="phone" required value="${esc(profile?.phone)}" placeholder="98XXXXXXXX"></div></div>
+<label>Delivery address</label><textarea name="addr" rows="2" required>${esc(profile?.address)}</textarea>
+<label>Size, colour or notes</label><textarea name="notes" rows="2"></textarea>
+<p class="muted">Payment: Cash on Delivery. We review your link and send the price in NPR before you pay anything.</p>
+<button class="red">${user?'Send order request':'Login to send request'}</button><div class="err" id="e"></div></form>`}
+
+async function submitOrder(e){e.preventDefault();if(!user){location.hash='login';return false}
+  const f=new FormData(e.target),u=f.get('url');
+  const {error}=await sb.from('orders').insert({user_id:user.id,store:storeOf(u),product_url:u,product_name:f.get('name'),qty:+f.get('qty'),phone:f.get('phone'),address:f.get('addr'),notes:f.get('notes')});
+  if(error){$('#e').textContent='Could not send: '+error.message}else{location.hash='orders'}return false}
+
+function authView(reg){$('#app').innerHTML=`<form class="card" onsubmit="return auth(event,${reg})"><h2>${reg?'Create account':'Login'}</h2>
+${reg?`<label>Full name</label><input name="name" required><label>Phone</label><input name="phone" required><label>Address</label><input name="addr" required>`:''}
+<label>Email</label><input name="email" type="email" required><label>Password</label><input name="pw" type="password" minlength="6" required>
+<button class="red">${reg?'Register':'Login'}</button><div class="err" id="e"></div>
+<p class="muted">${reg?'Have an account? <a href="#login">Login</a>':'New here? <a href="#register">Register</a>'}</p></form>`}
+
+async function auth(e,reg){e.preventDefault();const f=new FormData(e.target);
+  const r=reg?await sb.auth.signUp({email:f.get('email'),password:f.get('pw'),options:{data:{full_name:f.get('name'),phone:f.get('phone'),address:f.get('addr')}}}):await sb.auth.signInWithPassword({email:f.get('email'),password:f.get('pw')});
+  if(r.error){$('#e').textContent=r.error.message;return false}
+  if(reg&&!r.data.session){$('#e').textContent='Check your email to confirm, then login.';return false}
+  location.hash='home';return false}
+
+function steps(s){if(s==='Cancelled')return '';const i=STATUSES.indexOf(s);return `<div class="steps">${STATUSES.slice(0,6).map((x,j)=>`<span class="${j<=i?'on':''}">${x}</span>`).join('')}</div>`}
+
+async function orders(){if(!user){location.hash='login';return}
+  const {data,error}=await sb.from('orders').select('*').eq('user_id',user.id).order('created_at',{ascending:false});
+  $('#app').innerHTML=`<h2>My orders</h2>`+(error?`<p class="err">${esc(error.message)}</p>`:!data.length?`<p>No orders yet. <a href="#home">Request your first product</a>.</p>`:data.map(o=>`
+<div class="card"><div class="row"><b>${esc(o.product_name||o.store||'Product')}</b><span class="tag st ${o.status}">${o.status}</span></div>
+<div class="muted">${esc(o.store)} · Qty ${o.qty} · ${new Date(o.created_at).toLocaleDateString()}</div>
+<a href="${esc(o.product_url)}" target="_blank" rel="noopener">View product</a>
+<p>${o.quote_npr!=null?`Price quote: <b>NPR ${Number(o.quote_npr).toLocaleString()}</b> (pay on delivery)`:'Waiting for our price quote.'}</p>${steps(o.status)}</div>`).join(''))}
+
+async function admin(){if(!isAdmin){location.hash='home';return}
+  const {data,error}=await sb.from('orders').select('*').order('created_at',{ascending:false});
+  $('#app').innerHTML=`<h2>All orders</h2>`+(error?`<p class="err">${esc(error.message)}</p>`:data.map(o=>`
+<div class="card"><div class="row"><b>${esc(o.product_name||o.store)} ×${o.qty}</b><span class="muted">${new Date(o.created_at).toLocaleString()}</span></div>
+<a href="${esc(o.product_url)}" target="_blank" rel="noopener">${esc(o.store)} link</a>
+<div class="muted">${esc(o.phone)} · ${esc(o.address)}</div><div>${esc(o.notes)}</div>
+<div class="row"><select id="s${o.id}">${STATUSES.map(s=>`<option ${s===o.status?'selected':''}>${s}</option>`).join('')}</select>
+<input id="q${o.id}" type="number" placeholder="Quote NPR" value="${o.quote_npr??''}" style="max-width:150px"></div>
+<button onclick="save('${o.id}')">Save</button>
+<a class="btn ghost" target="_blank" rel="noopener" href="https://wa.me/${o.phone.replace(/\D/g,'').replace(/^(?=\d{10}$)/,'977')}">WhatsApp customer</a></div>`).join(''))}
+async function save(id){const q=$('#q'+id).value;
+  const {error}=await sb.from('orders').update({status:$('#s'+id).value,quote_npr:q===''?null:+q}).eq('id',id);
+  alert(error?error.message:'Saved')}
+
+const hist=[];
+async function ask(e){e.preventDefault();const i=$('#q'),t=i.value.trim();if(!t)return false;i.value='';
+  add(t,'u');hist.push({role:'user',content:t});const w=add('…','a');
+  try{const r=await fetch('/api/assistant',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({messages:hist})});
+    const d=await r.json();w.textContent=d.reply;hist.push({role:'assistant',content:d.reply})}catch{w.textContent='Assistant is unavailable. Please use WhatsApp.'}
+  return false}
+function add(t,c){const d=document.createElement('div');d.className='m '+c;d.textContent=t;$('#msgs').append(d);$('#msgs').scrollTop=1e9;return d}
+</script></body></html>
