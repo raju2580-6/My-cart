@@ -37,7 +37,7 @@ button.red{background:var(--red)}button.ghost,.btn.ghost{background:none;color:v
 <div class="fab">
   <div id="chat"><div id="msgs"><div class="m a">नमस्ते! Ask me about products, ordering or Cash on Delivery.</div></div>
     <form onsubmit="return ask(event)"><input id="q" placeholder="Type your question" aria-label="Question" required><button class="red">Send</button></form></div>
-  <button class="red" onclick="chat.classList.toggle('open')">AI assistant</button>
+  <button class="red" onclick="toggleChat()">AI assistant</button>
   <a class="btn wa" id="wa" target="_blank" rel="noopener">WhatsApp support</a>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
@@ -46,6 +46,8 @@ const SB_URL='https://dgmcsadmhbwibhcbhksf.supabase.co', SB_KEY='eyJhbGciOiJIUzI
 const sb=supabase.createClient(SB_URL,SB_KEY);
 const STATUSES=['Requested','Quoted','Confirmed','Ordered','Shipped','Delivered','Cancelled'];
 const $=s=>document.querySelector(s);
+const chat=$('#chat');
+const toggleChat=()=>chat&&chat.classList.toggle('open');
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 let user=null,profile=null,isAdmin=false;
 $('#wa').href='https://wa.me/'+WA_NUMBER+'?text='+encodeURIComponent('Hello my Cart, I need help.');
