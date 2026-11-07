@@ -7,13 +7,15 @@
 :root{--red:#c8102e;--navy:#10264a;--sand:#f7f3ec;--ink:#1b1b1b;--line:#ddd5c6}
 *{box-sizing:border-box}body{margin:0;font:16px/1.5 Hind,system-ui,sans-serif;color:var(--ink);background:var(--sand)}
 h1,h2,h3,.logo{font-family:'Baloo 2',sans-serif;margin:0}
-header{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;background:var(--navy);color:#fff;position:sticky;top:0;z-index:5}
+header{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;background:var(--navy);color:#fff;position:sticky;top:0;z-index:5;gap:8px}
 .logo{font-size:24px;color:#fff;text-decoration:none}.logo b{color:#ff6b7f}
-nav a{color:#fff;margin-left:14px;text-decoration:none;font-size:15px}
+nav{display:flex;flex-wrap:wrap;justify-content:flex-end}
+nav a{color:#fff;margin-left:12px;text-decoration:none;font-size:15px}
 main{max-width:760px;margin:0 auto;padding:20px 16px 90px}
 .hero{background:var(--red);color:#fff;padding:28px 20px;border-radius:14px;margin-bottom:20px}
 .hero h1{font-size:32px;line-height:1.15}.hero p{margin:8px 0 0}
 .card{background:#fff;border:1px solid var(--line);border-radius:10px;padding:16px;margin-bottom:14px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px}.grid .card{margin:0}
 label{display:block;font-weight:500;margin:10px 0 4px}
 input,textarea,select{width:100%;padding:10px;border:1px solid var(--line);border-radius:8px;font:inherit;background:#fff}
 button,.btn{background:var(--navy);color:#fff;border:0;border-radius:8px;padding:11px 18px;font:500 16px Hind,sans-serif;cursor:pointer;text-decoration:none;display:inline-block;margin-top:12px}
@@ -37,7 +39,7 @@ button.red{background:var(--red)}button.ghost,.btn.ghost{background:none;color:v
 <div class="fab">
   <div id="chat"><div id="msgs"><div class="m a">नमस्ते! Ask me about products, ordering or Cash on Delivery.</div></div>
     <form onsubmit="return ask(event)"><input id="q" placeholder="Type your question" aria-label="Question" required><button class="red">Send</button></form></div>
-  <button class="red" onclick="toggleChat()">AI assistant</button>
+  <button class="red" onclick="chat.classList.toggle('open')">AI assistant</button>
   <a class="btn wa" id="wa" target="_blank" rel="noopener">WhatsApp support</a>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
@@ -46,10 +48,11 @@ const SB_URL='https://dgmcsadmhbwibhcbhksf.supabase.co', SB_KEY='eyJhbGciOiJIUzI
 const sb=supabase.createClient(SB_URL,SB_KEY);
 const STATUSES=['Requested','Quoted','Confirmed','Ordered','Shipped','Delivered','Cancelled'];
 const $=s=>document.querySelector(s);
-const chat=$('#chat');
-const toggleChat=()=>chat&&chat.classList.toggle('open');
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 let user=null,profile=null,isAdmin=false;
+const PROD={};
+let cart=[];try{cart=JSON.parse(localStorage.getItem('cart')||'[]')}catch{cart=[]}
+function saveCart(){try{localStorage.setItem('cart',JSON.stringify(cart))}catch{}nav()}
 $('#wa').href='https://wa.me/'+WA_NUMBER+'?text='+encodeURIComponent('Hello my Cart, I need help.');
 
 async function setUser(u){user=u||null;profile=null;isAdmin=false;
@@ -59,15 +62,50 @@ sb.auth.getSession().then(({data})=>setUser(data.session?.user));
 sb.auth.onAuthStateChange((e,s)=>{if(e!=='TOKEN_REFRESHED')setUser(s?.user)});
 addEventListener('hashchange',render);
 
-function nav(){$('#nav').innerHTML=user?`<a href="#home">Home</a><a href="#orders">My orders</a>${isAdmin?'<a href="#admin">Admin</a>':''}<a href="#" onclick="sb.auth.signOut();location.hash='home';return false">Logout</a>`:`<a href="#login">Login</a><a href="#register">Register</a>`}
+function nav(){const n=cart.reduce((s,i)=>s+i.qty,0);
+  $('#nav').innerHTML=`<a href="#shop">Shop</a><a href="#cart">Cart (${n})</a>`+(user?`<a href="#orders">My orders</a>${isAdmin?'<a href="#admin">Admin</a><a href="#products">Products</a>':''}<a href="#" onclick="sb.auth.signOut();location.hash='home';return false">Logout</a>`:`<a href="#login">Login</a><a href="#register">Register</a>`)}
 function storeOf(u){try{const h=new URL(u).hostname;return /amazon\./.test(h)||/amzn\./.test(h)?'Amazon':/flipkart\.|fkrt\./.test(h)?'Flipkart':h.replace('www.','')}catch{return null}}
 
 function render(){nav();const v=(location.hash||'#home').slice(1);
-  const f={home,login:()=>authView(0),register:()=>authView(1),orders,admin}[v]||home;f()}
+  const f={home,login:()=>authView(0),register:()=>authView(1),orders,admin,shop,cart:cartView,products:prodAdmin}[v]||home;f()}
+
+const img=u=>/^https?:\/\//.test(u||'')?`<img src="${esc(u)}" alt="" loading="lazy" style="width:100%;height:150px;object-fit:cover;border-radius:8px;background:#eee">`:'';
+function pcard(p){return `<div class="card">${img(p.image_url)}<div class="row"><b>${esc(p.name)}</b><span>NPR ${Number(p.price_npr).toLocaleString()}</span></div><div class="muted">${esc(p.description)}</div>${p.in_stock?`<button class="red" onclick="addCart('${p.id}')">Add to cart</button>`:'<span class="tag">Out of stock</span>'}</div>`}
+function addCart(id){const p=PROD[id];if(!p)return;const x=cart.find(i=>i.id===id);
+  if(x)x.qty++;else cart.push({id,name:p.name,price:Number(p.price_npr),qty:1});saveCart();alert('Added to cart')}
+
+async function loadFeatured(){const {data}=await sb.from('products').select('*').eq('featured',true).eq('in_stock',true).limit(4);
+  if(data&&data.length&&$('#feat')){data.forEach(p=>PROD[p.id]=p);$('#feat').innerHTML=`<h2>Featured products</h2><div class="grid">${data.map(pcard).join('')}</div><p><a href="#shop">See all products →</a></p>`}}
+
+async function shop(){$('#app').innerHTML='<h2>Shop</h2><div id="pl">Loading…</div>';
+  const {data,error}=await sb.from('products').select('*').order('created_at',{ascending:false});
+  if(error){$('#pl').innerHTML='<p class="err">'+esc(error.message)+'</p>';return}
+  data.forEach(p=>PROD[p.id]=p);
+  $('#pl').innerHTML=data.length?`<div class="grid">${data.map(pcard).join('')}</div>`:'<p>No products yet. You can still <a href="#home">request any product link</a>.</p>'}
+
+function chg(k,d){cart[k].qty+=d;if(cart[k].qty<=0)cart.splice(k,1);saveCart();cartView()}
+function cartView(){const tot=cart.reduce((s,i)=>s+i.price*i.qty,0);
+  $('#app').innerHTML='<h2>Your cart</h2>'+(!cart.length?'<p>Your cart is empty. <a href="#shop">Go to the shop</a></p>':cart.map((i,k)=>`
+<div class="card"><div class="row"><b>${esc(i.name)}</b><span>NPR ${(i.price*i.qty).toLocaleString()}</span></div>
+<div class="row"><span class="muted">NPR ${i.price.toLocaleString()} each</span><span><button class="ghost" style="margin:0" onclick="chg(${k},-1)">−</button> &nbsp;${i.qty}&nbsp; <button class="ghost" style="margin:0" onclick="chg(${k},1)">+</button></span></div></div>`).join('')+`
+<form class="card" onsubmit="return checkout(event)"><div class="row"><b>Total</b><b>NPR ${tot.toLocaleString()}</b></div>
+<label>Phone / WhatsApp</label><input name="phone" required value="${esc(profile?.phone)}" placeholder="98XXXXXXXX">
+<label>Delivery address</label><textarea name="addr" rows="2" required>${esc(profile?.address)}</textarea>
+<label>Notes</label><textarea name="notes" rows="2"></textarea>
+<p class="muted">Payment: Cash on Delivery.</p>
+<button class="red">${user?'Place order':'Login to place order'}</button><div class="err" id="e"></div></form>`)}
+
+async function checkout(e){e.preventDefault();if(!user){location.hash='login';return false}
+  const f=new FormData(e.target);
+  const rows=cart.map(i=>({user_id:user.id,store:'myCart shop',product_url:location.origin+'/#shop',product_name:i.name,qty:i.qty,quote_npr:i.price*i.qty,status:'Confirmed',phone:f.get('phone'),address:f.get('addr'),notes:f.get('notes')}));
+  const {error}=await sb.from('orders').insert(rows);
+  if(error){$('#e').textContent='Could not place order: '+error.message;return false}
+  cart=[];saveCart();location.hash='orders';return false}
 
 function home(){$('#app').innerHTML=`
 <div class="hero"><h1>Paste any product link.<br>We deliver it to your door in Nepal.</h1>
 <p>Amazon, Flipkart or any online store. Pay Cash on Delivery.</p></div>
+<div id="feat"></div>
 <form class="card" onsubmit="return submitOrder(event)">
 <h2>Request a product</h2>
 <label>Product link</label><input name="url" type="url" required placeholder="https://www.amazon.in/…">
@@ -77,7 +115,8 @@ function home(){$('#app').innerHTML=`
 <label>Delivery address</label><textarea name="addr" rows="2" required>${esc(profile?.address)}</textarea>
 <label>Size, colour or notes</label><textarea name="notes" rows="2"></textarea>
 <p class="muted">Payment: Cash on Delivery. We review your link and send the price in NPR before you pay anything.</p>
-<button class="red">${user?'Send order request':'Login to send request'}</button><div class="err" id="e"></div></form>`}
+<button class="red">${user?'Send order request':'Login to send request'}</button><div class="err" id="e"></div></form>`;
+  loadFeatured()}
 
 async function submitOrder(e){e.preventDefault();if(!user){location.hash='login';return false}
   const f=new FormData(e.target),u=f.get('url');
@@ -100,11 +139,11 @@ function steps(s){if(s==='Cancelled')return '';const i=STATUSES.indexOf(s);retur
 
 async function orders(){if(!user){location.hash='login';return}
   const {data,error}=await sb.from('orders').select('*').eq('user_id',user.id).order('created_at',{ascending:false});
-  $('#app').innerHTML=`<h2>My orders</h2>`+(error?`<p class="err">${esc(error.message)}</p>`:!data.length?`<p>No orders yet. <a href="#home">Request your first product</a>.</p>`:data.map(o=>`
+  $('#app').innerHTML=`<h2>My orders</h2>`+(error?`<p class="err">${esc(error.message)}</p>`:!data.length?`<p>No orders yet. <a href="#shop">Visit the shop</a> or <a href="#home">request a product link</a>.</p>`:data.map(o=>`
 <div class="card"><div class="row"><b>${esc(o.product_name||o.store||'Product')}</b><span class="tag st ${o.status}">${o.status}</span></div>
 <div class="muted">${esc(o.store)} · Qty ${o.qty} · ${new Date(o.created_at).toLocaleDateString()}</div>
 <a href="${esc(o.product_url)}" target="_blank" rel="noopener">View product</a>
-<p>${o.quote_npr!=null?`Price quote: <b>NPR ${Number(o.quote_npr).toLocaleString()}</b> (pay on delivery)`:'Waiting for our price quote.'}</p>${steps(o.status)}</div>`).join(''))}
+<p>${o.quote_npr!=null?`Price: <b>NPR ${Number(o.quote_npr).toLocaleString()}</b> (pay on delivery)`:'Waiting for our price quote.'}</p>${steps(o.status)}</div>`).join(''))}
 
 async function admin(){if(!isAdmin){location.hash='home';return}
   const {data,error}=await sb.from('orders').select('*').order('created_at',{ascending:false});
@@ -120,6 +159,26 @@ async function save(id){const q=$('#q'+id).value;
   const {error}=await sb.from('orders').update({status:$('#s'+id).value,quote_npr:q===''?null:+q}).eq('id',id);
   alert(error?error.message:'Saved')}
 
+async function prodAdmin(){if(!isAdmin){location.hash='home';return}
+  const {data,error}=await sb.from('products').select('*').order('created_at',{ascending:false});
+  $('#app').innerHTML=`<h2>Products</h2>
+<form class="card" onsubmit="return addProd(event)"><h3>Add a product</h3>
+<label>Name</label><input name="name" required>
+<label>Description</label><textarea name="desc" rows="2"></textarea>
+<label>Price (NPR)</label><input name="price" type="number" min="0" required>
+<label>Image link (optional)</label><input name="img" type="url" placeholder="https://…">
+<label><input type="checkbox" name="feat" style="width:auto"> Show on home page (featured)</label>
+<button class="red">Add product</button><div class="err" id="e"></div></form>`+(error?`<p class="err">${esc(error.message)}</p>`:data.map(p=>`
+<div class="card"><div class="row"><b>${esc(p.name)}</b><span>NPR ${Number(p.price_npr).toLocaleString()}</span></div>
+<div class="row"><button onclick="tog('${p.id}','in_stock',${!p.in_stock})">${p.in_stock?'Mark out of stock':'Mark in stock'}</button>
+<button class="ghost" onclick="tog('${p.id}','featured',${!p.featured})">${p.featured?'Unfeature':'Feature'}</button>
+<button class="ghost" onclick="delProd('${p.id}')">Delete</button></div></div>`).join(''))}
+async function addProd(e){e.preventDefault();const f=new FormData(e.target);
+  const {error}=await sb.from('products').insert({name:f.get('name'),description:f.get('desc'),price_npr:+f.get('price'),image_url:f.get('img')||null,featured:!!f.get('feat')});
+  if(error){$('#e').textContent=error.message;return false}prodAdmin();return false}
+async function tog(id,col,val){const {error}=await sb.from('products').update({[col]:val}).eq('id',id);if(error)alert(error.message);prodAdmin()}
+async function delProd(id){if(!confirm('Delete this product?'))return;const {error}=await sb.from('products').delete().eq('id',id);if(error)alert(error.message);prodAdmin()}
+
 const hist=[];
 async function ask(e){e.preventDefault();const i=$('#q'),t=i.value.trim();if(!t)return false;i.value='';
   add(t,'u');hist.push({role:'user',content:t});const w=add('…','a');
@@ -127,4 +186,4 @@ async function ask(e){e.preventDefault();const i=$('#q'),t=i.value.trim();if(!t)
     const d=await r.json();w.textContent=d.reply;hist.push({role:'assistant',content:d.reply})}catch{w.textContent='Assistant is unavailable. Please use WhatsApp.'}
   return false}
 function add(t,c){const d=document.createElement('div');d.className='m '+c;d.textContent=t;$('#msgs').append(d);$('#msgs').scrollTop=1e9;return d}
-</script></body></html>
+</script></body></html></document_content></document>
