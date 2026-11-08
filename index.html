@@ -1,41 +1,55 @@
 <!DOCTYPE html>
 <html lang="en"><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>my Cart – Buy from Amazon & Flipkart in Nepal</title>
-<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700&family=Hind:wght@400;500&display=swap" rel="stylesheet">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>myCart – Buy from Amazon & Flipkart in Nepal</title>
+<meta name="description" content="Paste any Amazon, Flipkart or Indian store link. myCart buys it and delivers it to your door in Nepal. Cash on Delivery.">
+<meta name="theme-color" content="#10264a">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="icon" href="/icon-192.png">
+<link rel="apple-touch-icon" href="/icon-192.png">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&family=Hind:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-:root{--red:#c8102e;--navy:#10264a;--sand:#f7f3ec;--ink:#1b1b1b;--line:#ddd5c6}
+:root{--red:#c8102e;--navy:#10264a;--sand:#f7f3ec;--gold:#f2a900;--ink:#1b1b1b;--line:#ddd5c6}
 *{box-sizing:border-box}body{margin:0;font:16px/1.5 Hind,system-ui,sans-serif;color:var(--ink);background:var(--sand)}
-h1,h2,h3,.logo{font-family:'Baloo 2',sans-serif;margin:0}
-header{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;background:var(--navy);color:#fff;position:sticky;top:0;z-index:5;gap:8px}
-.logo{font-size:24px;color:#fff;text-decoration:none}.logo b{color:#ff6b7f}
-nav{display:flex;flex-wrap:wrap;justify-content:flex-end}
-nav a{color:#fff;margin-left:12px;text-decoration:none;font-size:15px}
-main{max-width:760px;margin:0 auto;padding:20px 16px 90px}
-.hero{background:var(--red);color:#fff;padding:28px 20px;border-radius:14px;margin-bottom:20px}
-.hero h1{font-size:32px;line-height:1.15}.hero p{margin:8px 0 0}
-.card{background:#fff;border:1px solid var(--line);border-radius:10px;padding:16px;margin-bottom:14px}
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px}.grid .card{margin:0}
+h1,h2,h3,.logo{font-family:'Baloo 2',sans-serif;margin:0;line-height:1.15}
+header{display:flex;align-items:center;gap:8px;padding:10px 14px;padding-top:calc(10px + env(safe-area-inset-top,0));background:var(--navy);color:#fff;position:sticky;top:0;z-index:5}
+.logo{font-size:24px;font-weight:800;color:#fff;text-decoration:none;margin-right:auto}.logo b{color:#ff6b7f}
+.chip{color:#fff;text-decoration:none;font-size:14px;padding:5px 11px;border:1px solid #ffffff55;border-radius:99px;white-space:nowrap}
+.sale{background:var(--gold);color:var(--navy);text-align:center;font-weight:600;font-size:14px;padding:4px}
+main{max-width:760px;margin:0 auto;padding:16px 14px 150px}
+.banner{background:linear-gradient(135deg,#7a0c22,var(--red) 55%,#e8590c);color:#fff;border-radius:16px;padding:26px 20px;margin-bottom:18px;position:relative;overflow:hidden}
+.banner:after{content:"";position:absolute;right:-30px;top:-30px;width:150px;height:150px;border-radius:50%;background:var(--gold);opacity:.35}
+.banner h1{font-size:clamp(30px,8.5vw,44px);font-weight:800;position:relative}.banner p{margin:8px 0 14px;position:relative;max-width:26em}
+.banner .btn{position:relative}
+.card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:12px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px}.grid .card{margin:0;display:flex;flex-direction:column;gap:6px}
+.feat{display:grid;gap:10px;margin:14px 0}.feat a{display:flex;gap:12px;align-items:center;text-decoration:none;color:inherit}
+.feat i{font-style:normal;font-size:22px;background:#fff0c2;border-radius:10px;width:44px;height:44px;display:grid;place-items:center;flex:none}
 label{display:block;font-weight:500;margin:10px 0 4px}
-input,textarea,select{width:100%;padding:10px;border:1px solid var(--line);border-radius:8px;font:inherit;background:#fff}
-button,.btn{background:var(--navy);color:#fff;border:0;border-radius:8px;padding:11px 18px;font:500 16px Hind,sans-serif;cursor:pointer;text-decoration:none;display:inline-block;margin-top:12px}
-button.red{background:var(--red)}button.ghost,.btn.ghost{background:none;color:var(--navy);border:1px solid var(--navy)}
-:focus-visible{outline:3px solid #f2a900;outline-offset:2px}
-.tag{display:inline-block;padding:2px 10px;border-radius:99px;background:#e8eef9;font-size:13px}
+input,textarea,select{width:100%;padding:11px;border:1px solid var(--line);border-radius:8px;font:inherit;background:#fff}
+button,.btn{background:var(--navy);color:#fff;border:0;border-radius:10px;padding:11px 18px;font:600 16px Hind,sans-serif;cursor:pointer;text-decoration:none;display:inline-block;margin-top:10px}
+button.red,.btn.red{background:var(--red)}button.gold,.btn.gold{background:var(--gold);color:var(--navy)}
+button.ghost,.btn.ghost{background:none;color:var(--navy);border:1px solid var(--navy)}
+:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+.tag{display:inline-block;padding:2px 10px;border-radius:99px;background:#e8eef9;font-size:13px}.tag.ok{background:#d6f1dc;color:#0d4a2a}
 .st{background:#fff0c2}.st.Delivered{background:#d6f1dc}.st.Cancelled{background:#f6d4d4}
 .row{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center}
 .muted{color:#666;font-size:14px}.err{color:var(--red);margin-top:8px}
 .steps{display:flex;gap:4px;flex-wrap:wrap;margin-top:8px}.steps span{font-size:12px;padding:2px 8px;border-radius:6px;background:#eee}.steps .on{background:var(--navy);color:#fff}
-.fab{position:fixed;right:14px;bottom:14px;display:flex;flex-direction:column;align-items:flex-end;gap:8px;z-index:9}
-.fab a,.fab button{margin:0;box-shadow:0 2px 8px #0003;border-radius:99px}
-.wa{background:#1fa855}
-#chat{display:none;width:min(340px,calc(100vw - 28px));height:380px;background:#fff;border:1px solid var(--line);border-radius:12px;flex-direction:column;box-shadow:0 4px 16px #0003}
+.price{font:700 18px 'Baloo 2'}
+.bottom{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid var(--line);display:flex;padding-bottom:env(safe-area-inset-bottom,0);z-index:6}
+.bottom a{flex:1;text-align:center;padding:8px 2px 6px;color:#666;text-decoration:none;font-size:12px}.bottom a b{display:block;font-size:20px;font-weight:400}.bottom a.on{color:var(--red);font-weight:600}
+.fab{position:fixed;right:12px;bottom:calc(72px + env(safe-area-inset-bottom,0));display:flex;flex-direction:column;align-items:flex-end;gap:8px;z-index:9}
+.fab a,.fab button{margin:0;box-shadow:0 2px 8px #0003;border-radius:99px;padding:9px 16px;font-size:15px}.wa{background:#1fa855}
+#chat{display:none;width:min(340px,calc(100vw - 24px));height:380px;background:#fff;border:1px solid var(--line);border-radius:12px;flex-direction:column;box-shadow:0 4px 16px #0003}
 #chat.open{display:flex}#msgs{flex:1;overflow:auto;padding:10px}
 .m{margin:6px 0;padding:8px 10px;border-radius:10px;max-width:88%;white-space:pre-wrap}.m.u{background:var(--navy);color:#fff;margin-left:auto}.m.a{background:#eee}
 #chat form{display:flex;gap:6px;padding:8px;border-top:1px solid var(--line)}#chat input{flex:1}#chat button{margin:0}
 </style></head><body>
-<header><a class="logo" href="#home">my<b>Cart</b></a><nav id="nav"></nav></header>
+<header><a class="logo" href="#home">my<b>Cart</b></a><span id="hdr"></span></header>
+<div class="sale" id="sale"></div>
 <main id="app"></main>
+<nav class="bottom" id="bn"></nav>
 <div class="fab">
   <div id="chat"><div id="msgs"><div class="m a">नमस्ते! Ask me about products, ordering or Cash on Delivery.</div></div>
     <form onsubmit="return ask(event)"><input id="q" placeholder="Type your question" aria-label="Question" required><button class="red">Send</button></form></div>
@@ -50,34 +64,47 @@ const STATUSES=['Requested','Quoted','Confirmed','Ordered','Shipped','Delivered'
 const $=s=>document.querySelector(s);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 let user=null,profile=null,isAdmin=false;
+const L={"en": {"home": "Home", "shop": "Shop", "orders": "Orders", "track": "Track", "settings": "Settings", "cart": "Cart", "login": "Login", "logout": "Logout", "register": "Register", "sale": "Festival Sale · Cash on Delivery across Nepal", "h1": "Shop India.<br>Delivered in Nepal.", "bp": "Paste any Amazon, Flipkart or store link. We buy it and bring it to your door.", "shopnow": "Shop now", "trackorder": "Track order", "store": "myCart Store", "stored": "Ready products. Browse and order directly.", "req": "Indian Product Request", "reqd": "Paste any Amazon, Flipkart or Meesho link.", "trk": "Track your order", "trkd": "Check status with your Order ID.", "latest": "Latest arrivals", "viewall": "View all →", "buy": "Buy Now", "instock": "In stock", "oos": "Out of stock", "install": "Install app", "lang": "Language", "myorders": "My orders", "orderid": "Order ID", "trackbtn": "Track", "nofound": "No order found with that ID. Check My orders for your IDs.", "yourcart": "Your cart", "total": "Total", "place": "Place order", "cod": "Payment: Cash on Delivery.", "account": "Account"}, "hi": {"home": "होम", "shop": "शॉप", "orders": "ऑर्डर", "track": "ट्रैक", "settings": "सेटिंग्स", "cart": "कार्ट", "login": "लॉगिन", "logout": "लॉगआउट", "register": "रजिस्टर", "sale": "त्योहार सेल · पूरे नेपाल में कैश ऑन डिलीवरी", "h1": "भारत से खरीदें।<br>नेपाल में पाएँ।", "bp": "Amazon, Flipkart या किसी भी स्टोर का लिंक पेस्ट करें। हम खरीदकर आपके दरवाज़े तक पहुँचाएँगे।", "shopnow": "अभी खरीदें", "trackorder": "ऑर्डर ट्रैक करें", "store": "myCart स्टोर", "stored": "तैयार प्रोडक्ट। देखें और सीधे ऑर्डर करें।", "req": "भारतीय प्रोडक्ट रिक्वेस्ट", "reqd": "Amazon, Flipkart या Meesho का लिंक पेस्ट करें।", "trk": "अपना ऑर्डर ट्रैक करें", "trkd": "ऑर्डर आईडी से स्टेटस देखें।", "latest": "नए प्रोडक्ट", "viewall": "सब देखें →", "buy": "अभी खरीदें", "instock": "स्टॉक में", "oos": "स्टॉक खत्म", "install": "ऐप इंस्टॉल करें", "lang": "भाषा", "myorders": "मेरे ऑर्डर", "orderid": "ऑर्डर आईडी", "trackbtn": "ट्रैक करें", "nofound": "इस आईडी का कोई ऑर्डर नहीं मिला। अपनी आईडी के लिए मेरे ऑर्डर देखें।", "yourcart": "आपका कार्ट", "total": "कुल", "place": "ऑर्डर करें", "cod": "भुगतान: कैश ऑन डिलीवरी।", "account": "खाता"}, "ne": {"home": "होम", "shop": "पसल", "orders": "अर्डर", "track": "ट्र्याक", "settings": "सेटिङ", "cart": "कार्ट", "login": "लगइन", "logout": "लगआउट", "register": "दर्ता", "sale": "चाडपर्व सेल · नेपालभर क्यास अन डेलिभरी", "h1": "भारतबाट किन्नुहोस्।<br>नेपालमा पाउनुहोस्।", "bp": "Amazon, Flipkart वा कुनै पनि पसलको लिंक पेस्ट गर्नुहोस्। हामी किनेर तपाईंको घरसम्म ल्याइदिन्छौं।", "shopnow": "अहिले किन्नुहोस्", "trackorder": "अर्डर ट्र्याक गर्नुहोस्", "store": "myCart पसल", "stored": "तयार सामान। हेर्नुहोस् र सिधै अर्डर गर्नुहोस्।", "req": "भारतीय सामानको अनुरोध", "reqd": "Amazon, Flipkart वा Meesho को लिंक पेस्ट गर्नुहोस्।", "trk": "आफ्नो अर्डर ट्र्याक गर्नुहोस्", "trkd": "अर्डर आईडीबाट स्थिति हेर्नुहोस्।", "latest": "नयाँ सामान", "viewall": "सबै हेर्नुहोस् →", "buy": "अहिले किन्नुहोस्", "instock": "स्टकमा छ", "oos": "स्टक सकियो", "install": "एप इन्स्टल गर्नुहोस्", "lang": "भाषा", "myorders": "मेरा अर्डर", "orderid": "अर्डर आईडी", "trackbtn": "ट्र्याक गर्नुहोस्", "nofound": "यो आईडीको अर्डर फेला परेन। आफ्नो आईडी मेरा अर्डरमा हेर्नुहोस्।", "yourcart": "तपाईंको कार्ट", "total": "जम्मा", "place": "अर्डर गर्नुहोस्", "cod": "भुक्तानी: क्यास अन डेलिभरी।", "account": "खाता"}, "hg": {"home": "Home", "shop": "Shop", "orders": "Orders", "track": "Track", "settings": "Settings", "cart": "Cart", "login": "Login", "logout": "Logout", "register": "Register", "sale": "Festival Sale · Poore Nepal mein Cash on Delivery", "h1": "India se kharidein.<br>Nepal mein payein.", "bp": "Amazon, Flipkart ya kisi bhi store ka link paste karein. Hum khareed kar aapke darwaze tak pahunchayenge.", "shopnow": "Abhi kharidein", "trackorder": "Order track karein", "store": "myCart Store", "stored": "Ready products. Dekhein aur seedha order karein.", "req": "Indian Product Request", "reqd": "Amazon, Flipkart ya Meesho ka link paste karein.", "trk": "Apna order track karein", "trkd": "Order ID se status dekhein.", "latest": "Naye products", "viewall": "Sab dekhein →", "buy": "Abhi kharidein", "instock": "Stock mein", "oos": "Stock khatam", "install": "App install karein", "lang": "Bhasha", "myorders": "Mere orders", "orderid": "Order ID", "trackbtn": "Track karein", "nofound": "Is ID ka koi order nahi mila. Apni ID ke liye Mere orders dekhein.", "yourcart": "Aapka cart", "total": "Total", "place": "Order karein", "cod": "Payment: Cash on Delivery.", "account": "Account"}};
+let lang='en';try{lang=localStorage.getItem('lang')||'en'}catch{}
+const t=k=>(L[lang]&&L[lang][k])||L.en[k]||k;
+function setLang(l){lang=l;try{localStorage.setItem('lang',l)}catch{}render()}
+let installEv=null;
+addEventListener('beforeinstallprompt',e=>{e.preventDefault();installEv=e;nav()});
+async function installApp(){if(!installEv)return;installEv.prompt();await installEv.userChoice;installEv=null;nav()}
+if('serviceWorker' in navigator)addEventListener('load',()=>navigator.serviceWorker.register('/sw.js').catch(()=>{}));
+
 const PROD={};
 let cart=[];try{cart=JSON.parse(localStorage.getItem('cart')||'[]')}catch{cart=[]}
 function saveCart(){try{localStorage.setItem('cart',JSON.stringify(cart))}catch{}nav()}
-$('#wa').href='https://wa.me/'+WA_NUMBER+'?text='+encodeURIComponent('Hello my Cart, I need help.');
+$('#wa').href='https://wa.me/'+WA_NUMBER+'?text='+encodeURIComponent('Hello myCart, I need help.');
 
 async function setUser(u){user=u||null;profile=null;isAdmin=false;
-  if(user){const {data}=await sb.from('profiles').select('*').eq('id',user.id).maybeSingle();profile=data;isAdmin=!!data?.is_admin}
+  if(user){try{const {data}=await sb.from('profiles').select('*').eq('id',user.id).maybeSingle();profile=data;isAdmin=!!data?.is_admin}catch{}}
   render()}
-sb.auth.getSession().then(({data})=>setUser(data.session?.user));
+sb.auth.getSession().then(({data})=>setUser(data.session?.user)).catch(()=>render());
 sb.auth.onAuthStateChange((e,s)=>{if(e!=='TOKEN_REFRESHED')setUser(s?.user)});
 addEventListener('hashchange',render);
+render();
 
-function nav(){const n=cart.reduce((s,i)=>s+i.qty,0);
-  $('#nav').innerHTML=`<a href="#shop">Shop</a><a href="#cart">Cart (${n})</a>`+(user?`<a href="#orders">My orders</a>${isAdmin?'<a href="#admin">Admin</a><a href="#products">Products</a>':''}<a href="#" onclick="sb.auth.signOut();location.hash='home';return false">Logout</a>`:`<a href="#login">Login</a><a href="#register">Register</a>`)}
+function nav(){const n=cart.reduce((x,i)=>x+i.qty,0),v=(location.hash||'#home').slice(1);
+  $('#sale').textContent=t('sale');document.documentElement.lang=lang==='hi'?'hi':lang==='ne'?'ne':'en';
+  $('#hdr').innerHTML=(installEv?`<a class="chip" href="#" onclick="installApp();return false">⬇ ${t('install')}</a> `:'')+`<a class="chip" href="#cart">${t('cart')} (${n})</a> `+(isAdmin?'<a class="chip" href="#admin">Admin</a> <a class="chip" href="#products">Products</a> ':'')+(user?'':`<a class="chip" href="#login">${t('login')}</a>`);
+  const k=(h,i)=>`<a href="#${h}" class="${v===h?'on':''}"><b>${i}</b>${t(h)}</a>`;
+  $('#bn').innerHTML=k('home','🏠')+k('shop','🛍️')+k('orders','📦')+k('track','📍')+k('settings','⚙️')}
 function storeOf(u){try{const h=new URL(u).hostname;return /amazon\./.test(h)||/amzn\./.test(h)?'Amazon':/flipkart\.|fkrt\./.test(h)?'Flipkart':h.replace('www.','')}catch{return null}}
-
 function render(){nav();const v=(location.hash||'#home').slice(1);
-  const f={home,login:()=>authView(0),register:()=>authView(1),orders,admin,shop,cart:cartView,products:prodAdmin}[v]||home;f()}
+  const f={home,login:()=>authView(0),register:()=>authView(1),orders,admin,shop,cart:cartView,products:prodAdmin,track,settings}[v]||home;f();scrollTo(0,0)}
 
-const img=u=>/^https?:\/\//.test(u||'')?`<img src="${esc(u)}" alt="" loading="lazy" style="width:100%;height:150px;object-fit:cover;border-radius:8px;background:#eee">`:'';
-function pcard(p){return `<div class="card">${img(p.image_url)}<div class="row"><b>${esc(p.name)}</b><span>NPR ${Number(p.price_npr).toLocaleString()}</span></div><div class="muted">${esc(p.description)}</div>${p.in_stock?`<button class="red" onclick="addCart('${p.id}')">Add to cart</button>`:'<span class="tag">Out of stock</span>'}</div>`}
+const img=u=>/^https?:\/\//.test(u||'')?`<img src="${esc(u)}" alt="" loading="lazy" style="width:100%;aspect-ratio:1;object-fit:cover;border-radius:8px;background:#eee">`:'';
+function pcard(p){return `<div class="card">${img(p.image_url)}<b>${esc(p.name)}</b><div class="muted">${esc(p.description)}</div><div class="price">NPR ${Number(p.price_npr).toLocaleString()}</div>${p.in_stock?`<span class="tag ok">${t('instock')}</span><button class="gold" style="margin:0" onclick="buyNow('${p.id}')">${t('buy')}</button>`:`<span class="tag">${t('oos')}</span>`}</div>`}
 function addCart(id){const p=PROD[id];if(!p)return;const x=cart.find(i=>i.id===id);
-  if(x)x.qty++;else cart.push({id,name:p.name,price:Number(p.price_npr),qty:1});saveCart();alert('Added to cart')}
+  if(x)x.qty++;else cart.push({id,name:p.name,price:Number(p.price_npr),qty:1});saveCart()}
+function buyNow(id){addCart(id);location.hash='cart'}
 
-async function loadFeatured(){const {data}=await sb.from('products').select('*').eq('featured',true).eq('in_stock',true).limit(4);
-  if(data&&data.length&&$('#feat')){data.forEach(p=>PROD[p.id]=p);$('#feat').innerHTML=`<h2>Featured products</h2><div class="grid">${data.map(pcard).join('')}</div><p><a href="#shop">See all products →</a></p>`}}
+async function loadFeatured(){const {data}=await sb.from('products').select('*').eq('featured',true).eq('in_stock',true).limit(6);
+  if(data&&data.length&&$('#feat')){data.forEach(p=>PROD[p.id]=p);$('#feat').innerHTML=`<div class="row"><h2>${t('latest')}</h2><a href="#shop">${t('viewall')}</a></div><div class="grid" style="margin-top:10px">${data.map(pcard).join('')}</div>`}}
 
-async function shop(){$('#app').innerHTML='<h2>Shop</h2><div id="pl">Loading…</div>';
+async function shop(){$('#app').innerHTML='<h2>'+t('shop')+'</h2><div id="pl">…</div>';
   const {data,error}=await sb.from('products').select('*').order('created_at',{ascending:false});
   if(error){$('#pl').innerHTML='<p class="err">'+esc(error.message)+'</p>';return}
   data.forEach(p=>PROD[p.id]=p);
@@ -85,15 +112,15 @@ async function shop(){$('#app').innerHTML='<h2>Shop</h2><div id="pl">Loading…<
 
 function chg(k,d){cart[k].qty+=d;if(cart[k].qty<=0)cart.splice(k,1);saveCart();cartView()}
 function cartView(){const tot=cart.reduce((s,i)=>s+i.price*i.qty,0);
-  $('#app').innerHTML='<h2>Your cart</h2>'+(!cart.length?'<p>Your cart is empty. <a href="#shop">Go to the shop</a></p>':cart.map((i,k)=>`
+  $('#app').innerHTML='<h2>'+t('yourcart')+'</h2>'+(!cart.length?'<p>Your cart is empty. <a href="#shop">Go to the shop</a></p>':cart.map((i,k)=>`
 <div class="card"><div class="row"><b>${esc(i.name)}</b><span>NPR ${(i.price*i.qty).toLocaleString()}</span></div>
 <div class="row"><span class="muted">NPR ${i.price.toLocaleString()} each</span><span><button class="ghost" style="margin:0" onclick="chg(${k},-1)">−</button> &nbsp;${i.qty}&nbsp; <button class="ghost" style="margin:0" onclick="chg(${k},1)">+</button></span></div></div>`).join('')+`
-<form class="card" onsubmit="return checkout(event)"><div class="row"><b>Total</b><b>NPR ${tot.toLocaleString()}</b></div>
+<form class="card" onsubmit="return checkout(event)"><div class="row"><b>${t('total')}</b><b>NPR ${tot.toLocaleString()}</b></div>
 <label>Phone / WhatsApp</label><input name="phone" required value="${esc(profile?.phone)}" placeholder="98XXXXXXXX">
 <label>Delivery address</label><textarea name="addr" rows="2" required>${esc(profile?.address)}</textarea>
 <label>Notes</label><textarea name="notes" rows="2"></textarea>
-<p class="muted">Payment: Cash on Delivery.</p>
-<button class="red">${user?'Place order':'Login to place order'}</button><div class="err" id="e"></div></form>`)}
+<p class="muted">${t('cod')}</p>
+<button class="red">${user?t('place'):t('login')}</button><div class="err" id="e"></div></form>`)}
 
 async function checkout(e){e.preventDefault();if(!user){location.hash='login';return false}
   const f=new FormData(e.target);
@@ -103,10 +130,13 @@ async function checkout(e){e.preventDefault();if(!user){location.hash='login';re
   cart=[];saveCart();location.hash='orders';return false}
 
 function home(){$('#app').innerHTML=`
-<div class="hero"><h1>Paste any product link.<br>We deliver it to your door in Nepal.</h1>
-<p>Amazon, Flipkart or any online store. Pay Cash on Delivery.</p></div>
+<div class="banner"><h1>${t('h1')}</h1><p>${t('bp')}</p><a class="btn gold" href="#shop">${t('shopnow')}</a> <a class="btn ghost" style="color:#fff;border-color:#fff" href="#track">${t('trackorder')}</a></div>
+<div class="feat">
+<a class="card" href="#shop"><i>🛍️</i><span><b>${t('store')}</b><br><span class="muted">${t('stored')}</span></span></a>
+<a class="card" href="#request" onclick="document.getElementById('request').scrollIntoView();return false"><i>🔗</i><span><b>${t('req')}</b><br><span class="muted">${t('reqd')}</span></span></a>
+<a class="card" href="#track"><i>📍</i><span><b>${t('trk')}</b><br><span class="muted">${t('trkd')}</span></span></a></div>
 <div id="feat"></div>
-<form class="card" onsubmit="return submitOrder(event)">
+<form class="card" id="request" onsubmit="return submitOrder(event)" style="margin-top:16px">
 <h2>Request a product</h2>
 <label>Product link</label><input name="url" type="url" required placeholder="https://www.amazon.in/…">
 <label>Product name (optional)</label><input name="name">
@@ -130,60 +160,4 @@ ${reg?`<label>Full name</label><input name="name" required><label>Phone</label><
 <p class="muted">${reg?'Have an account? <a href="#login">Login</a>':'New here? <a href="#register">Register</a>'}</p></form>`}
 
 async function auth(e,reg){e.preventDefault();const f=new FormData(e.target);
-  const r=reg?await sb.auth.signUp({email:f.get('email'),password:f.get('pw'),options:{data:{full_name:f.get('name'),phone:f.get('phone'),address:f.get('addr')}}}):await sb.auth.signInWithPassword({email:f.get('email'),password:f.get('pw')});
-  if(r.error){$('#e').textContent=r.error.message;return false}
-  if(reg&&!r.data.session){$('#e').textContent='Check your email to confirm, then login.';return false}
-  location.hash='home';return false}
-
-function steps(s){if(s==='Cancelled')return '';const i=STATUSES.indexOf(s);return `<div class="steps">${STATUSES.slice(0,6).map((x,j)=>`<span class="${j<=i?'on':''}">${x}</span>`).join('')}</div>`}
-
-async function orders(){if(!user){location.hash='login';return}
-  const {data,error}=await sb.from('orders').select('*').eq('user_id',user.id).order('created_at',{ascending:false});
-  $('#app').innerHTML=`<h2>My orders</h2>`+(error?`<p class="err">${esc(error.message)}</p>`:!data.length?`<p>No orders yet. <a href="#shop">Visit the shop</a> or <a href="#home">request a product link</a>.</p>`:data.map(o=>`
-<div class="card"><div class="row"><b>${esc(o.product_name||o.store||'Product')}</b><span class="tag st ${o.status}">${o.status}</span></div>
-<div class="muted">${esc(o.store)} · Qty ${o.qty} · ${new Date(o.created_at).toLocaleDateString()}</div>
-<a href="${esc(o.product_url)}" target="_blank" rel="noopener">View product</a>
-<p>${o.quote_npr!=null?`Price: <b>NPR ${Number(o.quote_npr).toLocaleString()}</b> (pay on delivery)`:'Waiting for our price quote.'}</p>${steps(o.status)}</div>`).join(''))}
-
-async function admin(){if(!isAdmin){location.hash='home';return}
-  const {data,error}=await sb.from('orders').select('*').order('created_at',{ascending:false});
-  $('#app').innerHTML=`<h2>All orders</h2>`+(error?`<p class="err">${esc(error.message)}</p>`:data.map(o=>`
-<div class="card"><div class="row"><b>${esc(o.product_name||o.store)} ×${o.qty}</b><span class="muted">${new Date(o.created_at).toLocaleString()}</span></div>
-<a href="${esc(o.product_url)}" target="_blank" rel="noopener">${esc(o.store)} link</a>
-<div class="muted">${esc(o.phone)} · ${esc(o.address)}</div><div>${esc(o.notes)}</div>
-<div class="row"><select id="s${o.id}">${STATUSES.map(s=>`<option ${s===o.status?'selected':''}>${s}</option>`).join('')}</select>
-<input id="q${o.id}" type="number" placeholder="Quote NPR" value="${o.quote_npr??''}" style="max-width:150px"></div>
-<button onclick="save('${o.id}')">Save</button>
-<a class="btn ghost" target="_blank" rel="noopener" href="https://wa.me/${o.phone.replace(/\D/g,'').replace(/^(?=\d{10}$)/,'977')}">WhatsApp customer</a></div>`).join(''))}
-async function save(id){const q=$('#q'+id).value;
-  const {error}=await sb.from('orders').update({status:$('#s'+id).value,quote_npr:q===''?null:+q}).eq('id',id);
-  alert(error?error.message:'Saved')}
-
-async function prodAdmin(){if(!isAdmin){location.hash='home';return}
-  const {data,error}=await sb.from('products').select('*').order('created_at',{ascending:false});
-  $('#app').innerHTML=`<h2>Products</h2>
-<form class="card" onsubmit="return addProd(event)"><h3>Add a product</h3>
-<label>Name</label><input name="name" required>
-<label>Description</label><textarea name="desc" rows="2"></textarea>
-<label>Price (NPR)</label><input name="price" type="number" min="0" required>
-<label>Image link (optional)</label><input name="img" type="url" placeholder="https://…">
-<label><input type="checkbox" name="feat" style="width:auto"> Show on home page (featured)</label>
-<button class="red">Add product</button><div class="err" id="e"></div></form>`+(error?`<p class="err">${esc(error.message)}</p>`:data.map(p=>`
-<div class="card"><div class="row"><b>${esc(p.name)}</b><span>NPR ${Number(p.price_npr).toLocaleString()}</span></div>
-<div class="row"><button onclick="tog('${p.id}','in_stock',${!p.in_stock})">${p.in_stock?'Mark out of stock':'Mark in stock'}</button>
-<button class="ghost" onclick="tog('${p.id}','featured',${!p.featured})">${p.featured?'Unfeature':'Feature'}</button>
-<button class="ghost" onclick="delProd('${p.id}')">Delete</button></div></div>`).join(''))}
-async function addProd(e){e.preventDefault();const f=new FormData(e.target);
-  const {error}=await sb.from('products').insert({name:f.get('name'),description:f.get('desc'),price_npr:+f.get('price'),image_url:f.get('img')||null,featured:!!f.get('feat')});
-  if(error){$('#e').textContent=error.message;return false}prodAdmin();return false}
-async function tog(id,col,val){const {error}=await sb.from('products').update({[col]:val}).eq('id',id);if(error)alert(error.message);prodAdmin()}
-async function delProd(id){if(!confirm('Delete this product?'))return;const {error}=await sb.from('products').delete().eq('id',id);if(error)alert(error.message);prodAdmin()}
-
-const hist=[];
-async function ask(e){e.preventDefault();const i=$('#q'),t=i.value.trim();if(!t)return false;i.value='';
-  add(t,'u');hist.push({role:'user',content:t});const w=add('…','a');
-  try{const r=await fetch('/api/assistant',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({messages:hist})});
-    const d=await r.json();w.textContent=d.reply;hist.push({role:'assistant',content:d.reply})}catch{w.textContent='Assistant is unavailable. Please use WhatsApp.'}
-  return false}
-function add(t,c){const d=document.createElement('div');d.className='m '+c;d.textContent=t;$('#msgs').append(d);$('#msgs').scrollTop=1e9;return d}
-</script></body></html></document_content></document>
+  const r=reg?await sb.auth.signUp({email:f.get('email'),password:f.get('pw'),options:{data:{full_name:f.get('name'),phone:f.get('phone'),a
