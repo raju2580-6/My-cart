@@ -145,6 +145,12 @@ async function save(id){const q=$('#q'+id).value;
   const {error}=await sb.from('orders').update({status:$('#s'+id).value,quote_npr:q===''?null:+q}).eq('id',id);
   alert(error?error.message:'Saved')}
 
+/* ---------- PRODUCTS (admin) with photo upload from gallery ---------- */
+function prev(inp){const f=inp.files[0],p=$('#pv');if(!f){p.style.display='none';return}p.src=URL.createObjectURL(f);p.style.display='block'}
+function shrink(file,max=1000){return new Promise((res,rej)=>{const im=new Image(),u=URL.createObjectURL(file);
+  im.onload=()=>{const r=Math.min(1,max/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=Math.round(im.width*r);c.height=Math.round(im.height*r);c.getContext('2d').drawImage(im,0,0,c.width,c.height);URL.revokeObjectURL(u);c.toBlob(b=>b?res(b):rej(new Error('Could not read photo')),'image/jpeg',0.82)};
+  im.onerror=()=>rej(new Error('Could not read this photo. Try another one.'));im.src=u})}
+
 async function prodAdmin(){if(!isAdmin){location.hash='home';return}
   const {data,error}=await sb.from('products').select('*').order('created_at',{ascending:false});
   $('#app').innerHTML=`<h2>Products</h2>
@@ -152,16 +158,30 @@ async function prodAdmin(){if(!isAdmin){location.hash='home';return}
 <label>Name</label><input name="name" required>
 <label>Description</label><textarea name="desc" rows="2"></textarea>
 <label>Price (NPR)</label><input name="price" type="number" min="0" required>
-<label>Image link (optional)</label><input name="img" type="url" placeholder="https://…">
+<label>Photo from gallery</label><input name="file" type="file" accept="image/*" onchange="prev(this)">
+<img id="pv" alt="" style="display:none;width:100%;max-width:200px;border-radius:8px;margin:6px 0">
+<label>Or image link (optional)</label><input name="img" type="url" placeholder="https://…">
 <label><input type="checkbox" name="feat" style="width:auto"> Show on home page (featured)</label>
-<button class="red">Add product</button><div class="err" id="e"></div></form>`+(error?`<p class="err">${esc(error.message)}</p>`:data.map(p=>`
-<div class="card"><div class="row"><b>${esc(p.name)}</b><span>NPR ${Number(p.price_npr).toLocaleString()}</span></div>
+<button class="red" id="ab">Add product</button><div class="err" id="e"></div></form>`+(error?`<p class="err">${esc(error.message)}</p>`:data.map(p=>`
+<div class="card">${p.image_url?`<img src="${esc(p.image_url)}" alt="" style="width:70px;height:70px;object-fit:cover;border-radius:8px;margin-bottom:6px">`:''}<div class="row"><b>${esc(p.name)}</b><span>NPR ${Number(p.price_npr).toLocaleString()}</span></div>
 <div class="row"><button onclick="tog('${p.id}','in_stock',${!p.in_stock})">${p.in_stock?'Mark out of stock':'Mark in stock'}</button>
 <button class="ghost" onclick="tog('${p.id}','featured',${!p.featured})">${p.featured?'Unfeature':'Feature'}</button>
 <button class="ghost" onclick="delProd('${p.id}')">Delete</button></div></div>`).join(''))}
-async function addProd(e){e.preventDefault();const f=new FormData(e.target);
-  const {error}=await sb.from('products').insert({name:f.get('name'),description:f.get('desc'),price_npr:+f.get('price'),image_url:f.get('img')||null,featured:!!f.get('feat')});
-  if(error){$('#e').textContent=error.message;return false}prodAdmin();return false}
+
+async function addProd(e){e.preventDefault();const f=new FormData(e.target),b=$('#ab'),er=$('#e');er.textContent='';
+  let url=f.get('img')||null;const file=f.get('file');
+  b.disabled=true;b.textContent='Uploading…';
+  try{
+    if(file&&file.size){
+      const blob=await shrink(file);
+      const path=Date.now()+'-'+Math.random().toString(36).slice(2,8)+'.jpg';
+      const {error:ue}=await sb.storage.from('product-images').upload(path,blob,{contentType:'image/jpeg'});
+      if(ue)throw ue;
+      url=sb.storage.from('product-images').getPublicUrl(path).data.publicUrl}
+    const {error}=await sb.from('products').insert({name:f.get('name'),description:f.get('desc'),price_npr:+f.get('price'),image_url:url,featured:!!f.get('feat')});
+    if(error)throw error;
+  }catch(x){er.textContent=(x&&x.message)||'Something went wrong';b.disabled=false;b.textContent='Add product';return false}
+  prodAdmin();return false}
 async function tog(id,col,val){const {error}=await sb.from('products').update({[col]:val}).eq('id',id);if(error)alert(error.message);prodAdmin()}
 async function delProd(id){if(!confirm('Delete this product?'))return;const {error}=await sb.from('products').delete().eq('id',id);if(error)alert(error.message);prodAdmin()}
 
@@ -172,3 +192,4 @@ async function ask(e){e.preventDefault();const i=$('#q'),t=i.value.trim();if(!t)
     const d=await r.json();w.textContent=d.reply;hist.push({role:'assistant',content:d.reply})}catch{w.textContent='Assistant is unavailable. Please use WhatsApp.'}
   return false}
 function add(t,c){const d=document.createElement('div');d.className='m '+c;d.textContent=t;$('#msgs').append(d);$('#msgs').scrollTop=1e9;return d}
+   
