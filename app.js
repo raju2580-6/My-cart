@@ -193,4 +193,33 @@ ${(p.sizes&&p.sizes.length)?`<div class="muted">Tap a size to mark it out of sto
 <button class="ghost" onclick="tog('${p.id}','featured',${!p.featured})">${p.featured?'Unfeature':'Feature'}</button>
 <button class="ghost" onclick="delProd('${p.id}')">Delete</button></div></div>`).join(''))}
 
-async function addAll(){const er=$('#e'),b=$('#ab');er.te
+async function addAll(){const er=$('#e'),b=$('#ab');er.textContent='';
+  if(!bulk.length){er.textContent='Choose photos first.';return}
+  const feat=$('#bf').checked,rows=[];
+  for(let i=0;i<bulk.length;i++){if(done.has(i))continue;
+    const name=$('#bn'+i).value.trim(),price=$('#bp'+i).value;
+    if(!name||price===''){er.textContent='Please fill name and price for product number '+(i+1)+'.';return}
+    rows.push({i,name,price:+price,sizes:$('#bs'+i).value.split(',').map(x=>x.trim()).filter(Boolean).map(s=>({s,in:true}))})}
+  if(!rows.length){er.textContent='Nothing to add.';return}
+  b.disabled=true;
+  try{for(let k=0;k<rows.length;k++){const r=rows[k],f=bulk[r.i];b.textContent='Saving '+(k+1)+' of '+rows.length+'…';let url=null;
+      if(f){const blob=await shrink(f);const path=Date.now()+'-'+Math.random().toString(36).slice(2,8)+'.jpg';
+        const {error:ue}=await sb.storage.from('product-images').upload(path,blob,{contentType:'image/jpeg'});if(ue)throw ue;
+        url=sb.storage.from('product-images').getPublicUrl(path).data.publicUrl}
+      const {error}=await sb.from('products').insert({name:r.name,price_npr:r.price,image_url:url,featured:feat,sizes:r.sizes});if(error)throw error;
+      done.add(r.i);const el=$('#r'+r.i);if(el)el.style.opacity='.4'}
+  }catch(x){er.textContent='Error: '+((x&&x.message)||'something went wrong')+'. Products already saved are faded; tap Add all products again to continue.';b.disabled=false;b.textContent='Add all products';return}
+  prodAdmin()}
+async function tsize(id,k){const p=PROD[id],s=(p.sizes||[]).map(x=>({...x}));s[k].in=!s[k].in;
+  const {error}=await sb.from('products').update({sizes:s}).eq('id',id);if(error)alert(error.message);prodAdmin()}
+async function tog(id,col,val){const {error}=await sb.from('products').update({[col]:val}).eq('id',id);if(error)alert(error.message);prodAdmin()}
+async function delProd(id){if(!confirm('Delete this product?'))return;const {error}=await sb.from('products').delete().eq('id',id);if(error)alert(error.message);prodAdmin()}
+
+const hist=[];
+async function ask(e){e.preventDefault();const i=$('#q'),t=i.value.trim();if(!t)return false;i.value='';
+  add(t,'u');hist.push({role:'user',content:t});const w=add('…','a');
+  try{const r=await fetch('/api/assistant',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({messages:hist})});
+    const d=await r.json();w.textContent=d.reply;hist.push({role:'assistant',content:d.reply})}catch{w.textContent='Assistant is unavailable. Please use WhatsApp.'}
+  return false}
+function add(t,c){const d=document.createElement('div');d.className='m '+c;d.textContent=t;$('#msgs').append(d);$('#msgs').scrollTop=1e9;return d}
+  
