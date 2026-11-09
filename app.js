@@ -44,11 +44,15 @@ function buyNow(id){addCart(id);location.hash='cart'}
 async function loadFeatured(){const {data}=await sb.from('products').select('*').eq('featured',true).eq('in_stock',true).limit(6);
   if(data&&data.length&&$('#feat')){data.forEach(p=>PROD[p.id]=p);$('#feat').innerHTML=`<div class="row"><h2>${t('latest')}</h2><a href="#shop">${t('viewall')}</a></div><div class="grid" style="margin-top:10px">${data.map(pcard).join('')}</div>`}}
 
-async function shop(){$('#app').innerHTML='<h2>'+t('shop')+'</h2><div id="pl">…</div>';
+let shopData=[];
+function drawShop(q){const s=(q||'').trim().toLowerCase();
+  const list=shopData.filter(p=>!s||(p.name||'').toLowerCase().includes(s)||(p.description||'').toLowerCase().includes(s));
+  $('#pl').innerHTML=list.length?`<div class="grid">${list.map(pcard).join('')}</div>`:(shopData.length?'<p>No products found. You can <a href="#home">request any product link</a>.</p>':'<p>No products yet. You can still <a href="#home">request any product link</a>.</p>')}
+async function shop(){$('#app').innerHTML='<h2>'+t('shop')+'</h2><input id="sq" type="search" placeholder="🔍 Search products…" oninput="drawShop(this.value)" style="margin-bottom:10px"><div id="pl">…</div>';
   const {data,error}=await sb.from('products').select('*').order('created_at',{ascending:false});
   if(error){$('#pl').innerHTML='<p class="err">'+esc(error.message)+'</p>';return}
   data.forEach(p=>PROD[p.id]=p);
-  $('#pl').innerHTML=data.length?`<div class="grid">${data.map(pcard).join('')}</div>`:'<p>No products yet. You can still <a href="#home">request any product link</a>.</p>'}
+  shopData=data;drawShop($('#sq').value)}
 
 function chg(k,d){cart[k].qty+=d;if(cart[k].qty<=0)cart.splice(k,1);saveCart();cartView()}
 function cartView(){const tot=cart.reduce((s,i)=>s+i.price*i.qty,0);
@@ -192,4 +196,3 @@ async function ask(e){e.preventDefault();const i=$('#q'),t=i.value.trim();if(!t)
     const d=await r.json();w.textContent=d.reply;hist.push({role:'assistant',content:d.reply})}catch{w.textContent='Assistant is unavailable. Please use WhatsApp.'}
   return false}
 function add(t,c){const d=document.createElement('div');d.className='m '+c;d.textContent=t;$('#msgs').append(d);$('#msgs').scrollTop=1e9;return d}
-   
