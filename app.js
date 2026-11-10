@@ -36,24 +36,34 @@ function render(){nav();const v=(location.hash||'#home').slice(1);
   const f={home,login:()=>authView(0),register:()=>authView(1),orders,admin,shop,cart:cartView,products:prodAdmin,track,settings}[v]||home;f();scrollTo(0,0)}
 
 const img=u=>/^https?:\/\//.test(u||'')?`<img src="${esc(u)}" alt="" loading="lazy" style="width:100%;aspect-ratio:1;object-fit:cover;border-radius:8px;background:#eee">`:'';
-function pcard(p){return `<div class="card">${img(p.image_url)}<b>${esc(p.name)}</b><div class="muted">${esc(p.description)}</div><div class="price">NPR ${Number(p.price_npr).toLocaleString()}</div>${p.in_stock?`<span class="tag ok">${t('instock')}</span><button class="gold" style="margin:0" onclick="buyNow('${p.id}')">${t('buy')}</button>`:`<span class="tag">${t('oos')}</span>`}</div>`}
-function addCart(id){const p=PROD[id];if(!p)return;const x=cart.find(i=>i.id===id);
-  if(x)x.qty++;else cart.push({id,name:p.name,price:Number(p.price_npr),qty:1});saveCart()}
-function buyNow(id){addCart(id);location.hash='cart'}
+const SEL={};
+function chipsInner(p){return (p.sizes||[]).map(x=>`<button type="button" class="${x.in&&SEL[p.id]===x.s?'red':'ghost'}" ${x.in?'':'disabled'} data-s="${esc(x.s)}" onclick="pickSize('${p.id}',this.dataset.s)" style="margin:2px;padding:6px 12px;${x.in?'':'text-decoration:line-through;opacity:.45'}">${esc(x.s)}</button>`).join('')}
+function sizeChips(p){return (p.sizes&&p.sizes.length)?`<div class="muted" style="margin-top:6px">Size</div><div data-sz="${p.id}">${chipsInner(p)}</div>`:''}
+function pickSize(id,s){SEL[id]=s;document.querySelectorAll('[data-sz="'+id+'"]').forEach(el=>el.innerHTML=chipsInner(PROD[id]))}
+function pcard(p){return `<div class="card">${img(p.image_url)}<b>${esc(p.name)}</b><div class="muted">${esc(p.description)}</div><div class="price">NPR ${Number(p.price_npr).toLocaleString()}</div>${sizeChips(p)}${p.in_stock?`<span class="tag ok">${t('instock')}</span><button class="gold" style="margin:0" onclick="buyNow('${p.id}')">${t('buy')}</button>`:`<span class="tag">${t('oos')}</span>`}</div>`}
+function addCart(id){const p=PROD[id];if(!p)return false;const has=(p.sizes||[]).length,s=SEL[id]||'';
+  if(has&&!s){alert('Please choose a size first');return false}
+  const x=cart.find(i=>i.id===id&&(i.size||'')===s);
+  if(x)x.qty++;else cart.push({id,name:p.name,price:Number(p.price_npr),qty:1,size:s});saveCart();return true}
+function buyNow(id){if(addCart(id))location.hash='cart'}
 
 async function loadFeatured(){const {data}=await sb.from('products').select('*').eq('featured',true).eq('in_stock',true).limit(6);
   if(data&&data.length&&$('#feat')){data.forEach(p=>PROD[p.id]=p);$('#feat').innerHTML=`<div class="row"><h2>${t('latest')}</h2><a href="#shop">${t('viewall')}</a></div><div class="grid" style="margin-top:10px">${data.map(pcard).join('')}</div>`}}
 
-async function shop(){$('#app').innerHTML='<h2>'+t('shop')+'</h2><div id="pl">…</div>';
+let shopData=[];
+function drawShop(q){const s=(q||'').trim().toLowerCase();
+  const list=shopData.filter(p=>!s||(p.name||'').toLowerCase().includes(s)||(p.description||'').toLowerCase().includes(s));
+  $('#pl').innerHTML=list.length?`<div class="grid">${list.map(pcard).join('')}</div>`:(shopData.length?'<p>No products found. You can <a href="#home">request any product link</a>.</p>':'<p>No products yet. You can still <a href="#home">request any product link</a>.</p>')}
+async function shop(){$('#app').innerHTML='<h2>'+t('shop')+'</h2><input id="sq" type="search" placeholder="🔍 Search products…" oninput="drawShop(this.value)" style="margin-bottom:10px"><div id="pl">…</div>';
   const {data,error}=await sb.from('products').select('*').order('created_at',{ascending:false});
   if(error){$('#pl').innerHTML='<p class="err">'+esc(error.message)+'</p>';return}
   data.forEach(p=>PROD[p.id]=p);
-  $('#pl').innerHTML=data.length?`<div class="grid">${data.map(pcard).join('')}</div>`:'<p>No products yet. You can still <a href="#home">request any product link</a>.</p>'}
+  shopData=data;drawShop($('#sq').value)}
 
 function chg(k,d){cart[k].qty+=d;if(cart[k].qty<=0)cart.splice(k,1);saveCart();cartView()}
 function cartView(){const tot=cart.reduce((s,i)=>s+i.price*i.qty,0);
   $('#app').innerHTML='<h2>'+t('yourcart')+'</h2>'+(!cart.length?'<p>Your cart is empty. <a href="#shop">Go to the shop</a></p>':cart.map((i,k)=>`
-<div class="card"><div class="row"><b>${esc(i.name)}</b><span>NPR ${(i.price*i.qty).toLocaleString()}</span></div>
+<div class="card"><div class="row"><b>${esc(i.name)}${i.size?' (Size '+esc(i.size)+')':''}</b><span>NPR ${(i.price*i.qty).toLocaleString()}</span></div>
 <div class="row"><span class="muted">NPR ${i.price.toLocaleString()} each</span><span><button class="ghost" style="margin:0" onclick="chg(${k},-1)">−</button> &nbsp;${i.qty}&nbsp; <button class="ghost" style="margin:0" onclick="chg(${k},1)">+</button></span></div></div>`).join('')+`
 <form class="card" onsubmit="return checkout(event)"><div class="row"><b>${t('total')}</b><b>NPR ${tot.toLocaleString()}</b></div>
 <label>Phone / WhatsApp</label><input name="phone" required value="${esc(profile?.phone)}" placeholder="98XXXXXXXX">
@@ -64,12 +74,20 @@ function cartView(){const tot=cart.reduce((s,i)=>s+i.price*i.qty,0);
 
 async function checkout(e){e.preventDefault();if(!user){location.hash='login';return false}
   const f=new FormData(e.target);
-  const rows=cart.map(i=>({user_id:user.id,store:'myCart shop',product_url:location.origin+'/#shop',product_name:i.name,qty:i.qty,quote_npr:i.price*i.qty,status:'Confirmed',phone:f.get('phone'),address:f.get('addr'),notes:f.get('notes')}));
+  const rows=cart.map(i=>({user_id:user.id,store:'myCart shop',product_url:location.origin+'/#shop',product_name:i.name+(i.size?' - Size '+i.size:''),qty:i.qty,quote_npr:i.price*i.qty,status:'Confirmed',phone:f.get('phone'),address:f.get('addr'),notes:f.get('notes')}));
   const {error}=await sb.from('orders').insert(rows);
   if(error){$('#e').textContent='Could not place order: '+error.message;return false}
   cart=[];saveCart();location.hash='orders';return false}
 
+function filterP(s){return shopData.filter(p=>(p.name||'').toLowerCase().includes(s)||(p.description||'').toLowerCase().includes(s))}
+async function ensureShop(){if(shopData.length)return;const {data}=await sb.from('products').select('*').order('created_at',{ascending:false});shopData=data||[];shopData.forEach(p=>PROD[p.id]=p)}
+async function homeSearch(q){const s=(q||'').trim().toLowerCase(),r=$('#hres'),f=$('#feat');if(!r)return;
+  if(!s){r.innerHTML='';if(f)f.style.display='';return}
+  await ensureShop();const h=$('#hq');if(!h||h.value.trim().toLowerCase()!==s)return;
+  if(f)f.style.display='none';const list=filterP(s);
+  r.innerHTML=list.length?`<div class="grid" style="margin-top:10px">${list.map(pcard).join('')}</div>`:'<p>No products found. You can request any product link below.</p>'}
 function home(){$('#app').innerHTML=`
+<input id="hq" type="search" placeholder="🔍 Search products…" oninput="homeSearch(this.value)" style="margin-bottom:10px"><div id="hres"></div>
 <div class="banner"><h1>${t('h1')}</h1><p>${t('bp')}</p><a class="btn gold" href="#shop">${t('shopnow')}</a> <a class="btn ghost" style="color:#fff;border-color:#fff" href="#track">${t('trackorder')}</a></div>
 <div class="feat">
 <a class="card" href="#shop"><i>🛍️</i><span><b>${t('store')}</b><br><span class="muted">${t('stored')}</span></span></a>
@@ -93,7 +111,7 @@ async function submitOrder(e){e.preventDefault();if(!user){location.hash='login'
   const {error}=await sb.from('orders').insert({user_id:user.id,store:storeOf(u),product_url:u,product_name:f.get('name'),qty:+f.get('qty'),phone:f.get('phone'),address:f.get('addr'),notes:f.get('notes')});
   if(error){$('#e').textContent='Could not send: '+error.message}else{location.hash='orders'}return false}
 
-function authView(reg){$('#app').innerHTML=`<form class="card" onsubmit="return auth(event,${reg})"><h2>${reg?'Create account':'Login'}</h2>
+  function authView(reg){$('#app').innerHTML=`<form class="card" onsubmit="return auth(event,${reg})"><h2>${reg?'Create account':'Login'}</h2>
 ${reg?`<label>Full name</label><input name="name" required><label>Phone</label><input name="phone" required><label>Address</label><input name="addr" required>`:''}
 <label>Email</label><input name="email" type="email" required><label>Password</label><input name="pw" type="password" minlength="6" required>
 <button class="red">${reg?'Register':'Login'}</button><div class="err" id="e"></div>
@@ -145,23 +163,55 @@ async function save(id){const q=$('#q'+id).value;
   const {error}=await sb.from('orders').update({status:$('#s'+id).value,quote_npr:q===''?null:+q}).eq('id',id);
   alert(error?error.message:'Saved')}
 
+/* ---------- PRODUCTS (admin) with photo upload from gallery ---------- */
+function shrink(file,max=1000){return new Promise((res,rej)=>{const im=new Image(),u=URL.createObjectURL(file);
+  im.onload=()=>{const r=Math.min(1,max/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=Math.round(im.width*r);c.height=Math.round(im.height*r);c.getContext('2d').drawImage(im,0,0,c.width,c.height);URL.revokeObjectURL(u);c.toBlob(b=>b?res(b):rej(new Error('Could not read photo')),'image/jpeg',0.82)};
+  im.onerror=()=>rej(new Error('Could not read this photo. Try another one.'));im.src=u})}
+
+let bulk=[],done=new Set();
+function rowHTML(i,f){return `<div class="card" id="r${i}">${f?`<img src="${URL.createObjectURL(f)}" alt="" style="width:80px;height:80px;object-fit:cover;border-radius:8px">`:'<div class="muted">No photo</div>'}
+<label>Name</label><input id="bn${i}"><label>Price (NPR)</label><input id="bp${i}" type="number" min="0">
+<label>Sizes (example: S,M,L,XL). Leave empty if no sizes</label><input id="bs${i}" placeholder="S,M,L,XL"></div>`}
+function pickFiles(inp){[...inp.files].forEach(f=>{bulk.push(f);$('#rows').insertAdjacentHTML('beforeend',rowHTML(bulk.length-1,f))});inp.value=''}
+function addBlank(){bulk.push(null);$('#rows').insertAdjacentHTML('beforeend',rowHTML(bulk.length-1,null))}
+
 async function prodAdmin(){if(!isAdmin){location.hash='home';return}
+  shopData=[];bulk=[];done=new Set();
   const {data,error}=await sb.from('products').select('*').order('created_at',{ascending:false});
+  if(data)data.forEach(p=>PROD[p.id]=p);
   $('#app').innerHTML=`<h2>Products</h2>
-<form class="card" onsubmit="return addProd(event)"><h3>Add a product</h3>
-<label>Name</label><input name="name" required>
-<label>Description</label><textarea name="desc" rows="2"></textarea>
-<label>Price (NPR)</label><input name="price" type="number" min="0" required>
-<label>Image link (optional)</label><input name="img" type="url" placeholder="https://…">
-<label><input type="checkbox" name="feat" style="width:auto"> Show on home page (featured)</label>
-<button class="red">Add product</button><div class="err" id="e"></div></form>`+(error?`<p class="err">${esc(error.message)}</p>`:data.map(p=>`
-<div class="card"><div class="row"><b>${esc(p.name)}</b><span>NPR ${Number(p.price_npr).toLocaleString()}</span></div>
+<div class="card"><h3>Add products (many at once)</h3>
+<p class="muted">Choose many photos from your gallery. For each photo, type the name, price and sizes. Then tap "Add all products".</p>
+<label>Choose photos</label><input type="file" accept="image/*" multiple onchange="pickFiles(this)">
+<button class="ghost" type="button" onclick="addBlank()">+ Add a product without photo</button>
+<div id="rows"></div>
+<label><input type="checkbox" id="bf" style="width:auto"> Show all these on home page (featured)</label>
+<button class="red" id="ab" onclick="addAll()">Add all products</button><div class="err" id="e"></div></div>`+(error?`<p class="err">${esc(error.message)}</p>`:data.map(p=>`
+<div class="card">${p.image_url?`<img src="${esc(p.image_url)}" alt="" style="width:70px;height:70px;object-fit:cover;border-radius:8px;margin-bottom:6px">`:''}<div class="row"><b>${esc(p.name)}</b><span>NPR ${Number(p.price_npr).toLocaleString()}</span></div>
+${(p.sizes&&p.sizes.length)?`<div class="muted">Tap a size to mark it out of stock (✕) or back in stock</div><div>${p.sizes.map((z,k)=>`<button class="${z.in?'':'ghost'}" style="margin:2px;padding:6px 12px" onclick="tsize('${p.id}',${k})">${esc(z.s)}${z.in?'':' ✕'}</button>`).join('')}</div>`:''}
 <div class="row"><button onclick="tog('${p.id}','in_stock',${!p.in_stock})">${p.in_stock?'Mark out of stock':'Mark in stock'}</button>
 <button class="ghost" onclick="tog('${p.id}','featured',${!p.featured})">${p.featured?'Unfeature':'Feature'}</button>
 <button class="ghost" onclick="delProd('${p.id}')">Delete</button></div></div>`).join(''))}
-async function addProd(e){e.preventDefault();const f=new FormData(e.target);
-  const {error}=await sb.from('products').insert({name:f.get('name'),description:f.get('desc'),price_npr:+f.get('price'),image_url:f.get('img')||null,featured:!!f.get('feat')});
-  if(error){$('#e').textContent=error.message;return false}prodAdmin();return false}
+
+async function addAll(){const er=$('#e'),b=$('#ab');er.textContent='';
+  if(!bulk.length){er.textContent='Choose photos first.';return}
+  const feat=$('#bf').checked,rows=[];
+  for(let i=0;i<bulk.length;i++){if(done.has(i))continue;
+    const name=$('#bn'+i).value.trim(),price=$('#bp'+i).value;
+    if(!name||price===''){er.textContent='Please fill name and price for product number '+(i+1)+'.';return}
+    rows.push({i,name,price:+price,sizes:$('#bs'+i).value.split(',').map(x=>x.trim()).filter(Boolean).map(s=>({s,in:true}))})}
+  if(!rows.length){er.textContent='Nothing to add.';return}
+  b.disabled=true;
+  try{for(let k=0;k<rows.length;k++){const r=rows[k],f=bulk[r.i];b.textContent='Saving '+(k+1)+' of '+rows.length+'…';let url=null;
+      if(f){const blob=await shrink(f);const path=Date.now()+'-'+Math.random().toString(36).slice(2,8)+'.jpg';
+        const {error:ue}=await sb.storage.from('product-images').upload(path,blob,{contentType:'image/jpeg'});if(ue)throw ue;
+        url=sb.storage.from('product-images').getPublicUrl(path).data.publicUrl}
+      const {error}=await sb.from('products').insert({name:r.name,price_npr:r.price,image_url:url,featured:feat,sizes:r.sizes});if(error)throw error;
+      done.add(r.i);const el=$('#r'+r.i);if(el)el.style.opacity='.4'}
+  }catch(x){er.textContent='Error: '+((x&&x.message)||'something went wrong')+'. Products already saved are faded; tap Add all products again to continue.';b.disabled=false;b.textContent='Add all products';return}
+  prodAdmin()}
+async function tsize(id,k){const p=PROD[id],s=(p.sizes||[]).map(x=>({...x}));s[k].in=!s[k].in;
+  const {error}=await sb.from('products').update({sizes:s}).eq('id',id);if(error)alert(error.message);prodAdmin()}
 async function tog(id,col,val){const {error}=await sb.from('products').update({[col]:val}).eq('id',id);if(error)alert(error.message);prodAdmin()}
 async function delProd(id){if(!confirm('Delete this product?'))return;const {error}=await sb.from('products').delete().eq('id',id);if(error)alert(error.message);prodAdmin()}
 
@@ -172,3 +222,4 @@ async function ask(e){e.preventDefault();const i=$('#q'),t=i.value.trim();if(!t)
     const d=await r.json();w.textContent=d.reply;hist.push({role:'assistant',content:d.reply})}catch{w.textContent='Assistant is unavailable. Please use WhatsApp.'}
   return false}
 function add(t,c){const d=document.createElement('div');d.className='m '+c;d.textContent=t;$('#msgs').append(d);$('#msgs').scrollTop=1e9;return d}
+  
