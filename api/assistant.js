@@ -4,8 +4,8 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end();
 
   const msgs = (req.body?.messages || []).slice(-10).map(m => ({
-    role: m.role === 'assistant' ? 'assistant' : 'user',
-    content: String(m.content).slice(0, 1000)
+    role: m.role === 'assistant' ? 'model' : 'user',
+    parts: [{ text: String(m.content).slice(0, 1000) }]
   }));
 
   while (msgs.length && msgs[0].role !== 'user') msgs.shift();
@@ -13,22 +13,18 @@ export default async function handler(req, res) {
   if (!msgs.length) return res.status(400).json({ reply: 'Ask me a question.' });
 
   try {
-    const r = await fetch('https://api.anthropic.com/v1/messages', {
+    const url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=' + process.env.GEMINI_API_KEY;
+    const r = await fetch(url, {
       method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        'x-api-key': process.env.ANTHROPIC_API_KEY,
-        'anthropic-version': '2023-06-01'
-      },
+      headers: { 'content-type': 'application/json' },
       body: JSON.stringify({
-        model: 'claude-sonnet-5-5',
-        max_tokens: 500,
-        system: SYS,
-        messages: msgs
+        systemInstruction: { parts: [{ text: SYS }] },
+        contents: msgs,
+        generationConfig: { maxOutputTokens: 500 }
       })
     });
     const d = await r.json();
-    res.json({ reply: d.content?.[0]?.text || 'Sorry, please try again.' });
+    res.json({ reply: d.candidates?.[0]?.content?.parts?.[0]?.text || 'Sorry, please try again.' });
   } catch (e) {
     res.status(500).json({ reply: 'Assistant is unavailable. Please use WhatsApp.' });
   }
