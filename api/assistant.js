@@ -1,7 +1,11 @@
-const SYS = `You are the shopping assistant for " Cart", a service in Nepal where customers send Amazon, Flipkart or other product links and we buy and deliver the item. Customers pay Cash on Delivery. Process: customer submits link, we review and send a price quote in NPR, customer confirms on WhatsApp, we order, ship, and deliver. Answer briefly in the customer's language (Nepali or English). Help compare products and judge whether a link is suitable. Never invent prices, fees, customs rules or delivery dates; for those, tell the customer to ask on WhatsApp support.`;
+const SYS = `You are the shopping assistant for "myCart", a service in Nepal where customers send Amazon, Flipkart or other product links and we buy and deliver the item. Customers pay Cash on Delivery. Process: customer submits link, we review and send a price quote in NPR, customer confirms on WhatsApp, we order, ship, and deliver. Answer briefly in the customer's language (Nepali, Hindi or English). Help compare products and judge whether a link is suitable. Never invent prices, fees, customs rules or delivery dates; for those, tell the customer to ask on WhatsApp support.`;
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end();
+
+  if (!process.env.GEMINI_API_KEY) {
+    return res.json({ reply: 'DEBUG: GEMINI_API_KEY is missing in Vercel.' });
+  }
 
   const msgs = (req.body?.messages || []).slice(-10).map(m => ({
     role: m.role === 'assistant' ? 'model' : 'user',
@@ -20,12 +24,19 @@ export default async function handler(req, res) {
       body: JSON.stringify({
         systemInstruction: { parts: [{ text: SYS }] },
         contents: msgs,
-        generationConfig: { maxOutputTokens: 500 }
+        generationConfig: {
+          maxOutputTokens: 1000,
+          thinkingConfig: { thinkingBudget: 0 }
+        }
       })
     });
     const d = await r.json();
-    res.json({ reply: d.candidates?.[0]?.content?.parts?.[0]?.text || 'Sorry, please try again.' });
+    if (d.error) {
+      return res.json({ reply: 'DEBUG: ' + d.error.message });
+    }
+    const text = d.candidates?.[0]?.content?.parts?.map(p => p.text || '').join('');
+    res.json({ reply: text || 'Sorry, please try again.' });
   } catch (e) {
     res.status(500).json({ reply: 'Assistant is unavailable. Please use WhatsApp.' });
   }
-}
+  }
