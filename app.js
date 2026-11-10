@@ -1,31 +1,91 @@
-const SYS = `You are the shopping assistant for " Cart", a service in Nepal where customers send Amazon, Flipkart or other product links and we buy and deliver the item. Customers pay Cash on Delivery. Process: customer submits link, we review and send a price quote in NPR, customer confirms on WhatsApp, we order, ship, and deliver. Answer briefly in the customer's language (Nepali or English). Help compare products and judge whether a link is suitable. Never invent prices, fees, customs rules or delivery dates; for those, tell the customer to ask on WhatsApp support.`;
+"use client";
+import { useEffect, useState } from "react";
+import { supabase } from "../lib/supabase";
 
-export default async function handler(req, res) {
-  if (req.method !== 'POST') return res.status(405).end();
+const box = { display: "block", width: "100%", padding: 10, margin: "8px 0", boxSizing: "border-box" };
 
-  const msgs = (req.body?.messages || []).slice(-10).map(m => ({
-    role: m.role === 'assistant' ? 'model' : 'user',
-    parts: [{ text: String(m.content).slice(0, 1000) }]
-  }));
+export default function Home() {
+  const [user, setUser] = useState(null);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [msg, setMsg] = useState("");
+  const [url, setUrl] = useState("");
+  const [notes, setNotes] = useState("");
+  const [orders, setOrders] = useState([]);
 
-  while (msgs.length && msgs[0].role !== 'user') msgs.shift();
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => setUser(data.session?.user ?? null));
+    const { data: sub } = supabase.auth.onAuthStateChange((_e, session) =>
+      setUser(session?.user ?? null)
+    );
+    return () => sub.subscription.unsubscribe();
+  }, []);
 
-  if (!msgs.length) return res.status(400).json({ reply: 'Ask me a question.' });
+  useEffect(() => {
+    if (user) loadOrders();
+  }, [user]);
 
-  try {
-    const url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=' + process.env.GEMINI_API_KEY;
-    const r = await fetch(url, {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({
-        systemInstruction: { parts: [{ text: SYS }] },
-        contents: msgs,
-        generationConfig: { maxOutputTokens: 500 }
-      })
-    });
-    const d = await r.json();
-    res.json({ reply: d.candidates?.[0]?.content?.parts?.[0]?.text || 'Sorry, please try again.' });
-  } catch (e) {
-    res.status(500).json({ reply: 'Assistant is unavailable. Please use WhatsApp.' });
+  async function loadOrders() {
+    const { data } = await supabase
+      .from("orders")
+      .select("*")
+      .order("created_at", { ascending: false });
+    setOrders(data || []);
   }
-}
+
+  async function signUp() {
+    const { error } = await supabase.auth.signUp({ email, password });
+    setMsg(error ? error.message : "Account created. Now log in (confirm your email first if asked).");
+  }
+
+  async function logIn() {
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    setMsg(error ? error.message : "");
+  }
+
+  async function submitLink() {
+    let platform = "other";
+    try { platform = new URL(url).hostname.replace("www.", ""); } catch (e) {}
+    const { error } = await supabase
+      .from("orders")
+      .insert({ user_id: user.id, product_url: url, platform, notes });
+    if (error) { setMsg(error.message); return; }
+    setUrl(""); setNotes(""); setMsg("Request sent!");
+    loadOrders();
+  }
+
+  if (!user) {
+    return (
+      <div>
+        <h1>Nepal Store</h1>
+        <p>Order from any Indian website, delivered to Nepal.</p>
+        <input style={box} placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} />
+        <input style={box} type="password" placeholder="Password (6+ characters)" value={password} onChange={(e) => setPassword(e.target.value)} />
+        <button style={box} onClick={logIn}>Log in</button>
+        <button style={box} onClick={signUp}>Create account</button>
+        <p>{msg}</p>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <h1>Nepal Store</h1>
+      <button onClick={() => supabase.auth.signOut()}>Log out</button>
+      <h3>Paste a product link</h3>
+      <input style={box} placeholder="https://www.amazon.in/..." value={url} onChange={(e) => setUrl(e.target.value)} />
+      <input style={box} placeholder="Notes (size, color, quantity)" value={notes} onChange={(e) => setNotes(e.target.value)} />
+      <button style={box} onClick={submitLink}>Send request</button>
+      <p>{msg}</p>
+      <h3>My orders</h3>
+      {orders.map((o) => (
+        <div key={o.id} style={{ border: "1px solid #ccc", padding: 10, margin: "8px 0" }}>
+          <div>{o.platform}</div>
+          <div style={{ wordBreak: "break-all", fontSize: 12 }}>{o.product_url}</div>
+          <b>Status: {o.status}</b>
+          {o.quoted_price_npr && <div>Quote: NPR {o.quoted_price_npr}</div>}
+        </div>
+      ))}
+    </div>
+  );
+           }
