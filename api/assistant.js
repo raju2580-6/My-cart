@@ -17,17 +17,14 @@ export default async function handler(req, res) {
   if (!msgs.length) return res.status(400).json({ reply: 'Ask me a question.' });
 
   try {
-    const url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=' + process.env.GEMINI_API_KEY;
+    const url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=' + process.env.GEMINI_API_KEY;
     const r = await fetch(url, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({
         systemInstruction: { parts: [{ text: SYS }] },
         contents: msgs,
-        generationConfig: {
-          maxOutputTokens: 1000,
-          thinkingConfig: { thinkingBudget: 0 }
-        }
+        generationConfig: { maxOutputTokens: 2000 }
       })
     });
     const d = await r.json();
@@ -39,4 +36,4 @@ export default async function handler(req, res) {
   } catch (e) {
     res.status(500).json({ reply: 'Assistant is unavailable. Please use WhatsApp.' });
   }
-  }
+}
