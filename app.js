@@ -1,109 +1,174 @@
-/* ===== EDIT THESE (copy URL and key from your old app.js) ===== */
-const CFG = {
-  SUPABASE_URL: 'PASTE_YOUR_SUPABASE_URL',
-  SUPABASE_KEY: 'PASTE_YOUR_SUPABASE_ANON_KEY',
-  WHATSAPP: '977XXXXXXXXXX',   // your WhatsApp number with country code
-  RATE: 1.6, FEE: 10, DELIVERY: 100,   // INR to NPR, service fee %, delivery NPR
-  OPEN: [15, 30], CLOSE: [19, 0]       // express delivery hours (Nepal time)
-};
-/* =============================================================== */
-const db = supabase.createClient(CFG.SUPABASE_URL, CFG.SUPABASE_KEY);
-const $ = s => document.querySelector(s);
-const esc = t => String(t ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-let user = null, products = [];
+if(!window.supabase){document.getElementById('app').innerHTML='<div class="card"><h2>No connection</h2><p>The page could not load fully. Please check your internet and try again.</p><button class="red" onclick="location.reload()">Retry</button></div>';throw new Error('supabase not loaded')}
+const SB_URL='https://dgmcsadmhbwibhcbhksf.supabase.co', SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRnbWNzYWRtaGJ3aWJoY2Joa3NmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTQwMzc0MzIsImV4cCI6MjEwOTYxMzQzMn0.ReE33H21g3YHQmTFN45Mw_eRrOYpp4cBBLrv_rteJc4', WA_NUMBER='9779713952940';
+const sb=supabase.createClient(SB_URL,SB_KEY);
+const STATUSES=['Requested','Quoted','Confirmed','Ordered','Shipped','Delivered','Cancelled'];
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+let user=null,profile=null,isAdmin=false;
+let lang='en';try{lang=localStorage.getItem('lang')||'en'}catch{}
+const t=k=>(L[lang]&&L[lang][k])||L.en[k]||k;
+function setLang(l){lang=l;try{localStorage.setItem('lang',l)}catch{}render()}
+let installEv=null;
+addEventListener('beforeinstallprompt',e=>{e.preventDefault();installEv=e;nav()});
+async function installApp(){if(!installEv)return;installEv.prompt();await installEv.userChoice;installEv=null;nav()}
+if('serviceWorker' in navigator)addEventListener('load',()=>navigator.serviceWorker.register('/sw.js').catch(()=>{}));
 
-$('#wa').href = 'https://wa.me/' + CFG.WHATSAPP + '?text=' + encodeURIComponent('Namaste myCart! I have a question about an order.');
+const PROD={};
+let cart=[];try{cart=JSON.parse(localStorage.getItem('cart')||'[]')}catch{cart=[]}
+function saveCart(){try{localStorage.setItem('cart',JSON.stringify(cart))}catch{}nav()}
+$('#wa').href='https://wa.me/'+WA_NUMBER+'?text='+encodeURIComponent('Hello myCart, I need help.');
 
-/* ---------- pages ---------- */
-function route() {
-  const h = (location.hash || '#home').slice(1);
-  document.querySelectorAll('main section').forEach(s => s.hidden = s.id !== h);
-  document.querySelectorAll('nav a').forEach(a => a.classList.toggle('on', a.hash === '#' + h));
-  if (h === 'shop') loadShop();
-  if (h === 'orders') loadOrders();
-  scrollTo(0, 0);
-}
-addEventListener('hashchange', route);
+async function setUser(u){user=u||null;profile=null;isAdmin=false;
+  if(user){try{const {data}=await sb.from('profiles').select('*').eq('id',user.id).maybeSingle();profile=data;isAdmin=!!data?.is_admin}catch{}}
+  render()}
+sb.auth.getSession().then(({data})=>setUser(data.session?.user)).catch(()=>render());
+sb.auth.onAuthStateChange((e,s)=>{if(e!=='TOKEN_REFRESHED')setUser(s?.user)});
+addEventListener('hashchange',render);
+render();
 
-/* ---------- sign in ---------- */
-const signIn = () => db.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: location.origin + location.pathname } });
-async function authUI() {
-  const { data } = await db.auth.getSession();
-  user = data.session ? data.session.user : null;
-  $('#auth').textContent = user ? 'Sign out' : 'Sign in';
-  $('#sauth').textContent = user ? 'Sign out' : 'Sign in with Google';
-  $('#sinfo').textContent = user ? 'Signed in as ' + user.email : 'You are not signed in.';
-}
-const authClick = async () => { if (user) { await db.auth.signOut(); await authUI(); route(); } else signIn(); };
-$('#auth').onclick = authClick; $('#sauth').onclick = authClick;
-db.auth.onAuthStateChange(authUI);
+function nav(){const n=cart.reduce((x,i)=>x+i.qty,0),v=(location.hash||'#home').slice(1);
+  $('#sale').textContent=t('sale');document.documentElement.lang=lang==='hi'?'hi':lang==='ne'?'ne':'en';
+  $('#hdr').innerHTML=(installEv?`<a class="chip" href="#" onclick="installApp();return false">⬇ ${t('install')}</a> `:'')+`<a class="chip" href="#cart">${t('cart')} (${n})</a> `+(isAdmin?'<a class="chip" href="#admin">Admin</a> <a class="chip" href="#products">Products</a> ':'')+(user?'':`<a class="chip" href="#login">${t('login')}</a>`);
+  const k=(h,i)=>`<a href="#${h}" class="${v===h?'on':''}"><b>${i}</b>${t(h)}</a>`;
+  $('#bn').innerHTML=k('home','🏠')+k('shop','🛍️')+k('orders','📦')+k('track','📍')+k('settings','⚙️')}
+function storeOf(u){try{const h=new URL(u).hostname;return /amazon\./.test(h)||/amzn\./.test(h)?'Amazon':/flipkart\.|fkrt\./.test(h)?'Flipkart':h.replace('www.','')}catch{return null}}
+function render(){nav();const v=(location.hash||'#home').slice(1);
+  const f={home,login:()=>authView(0),register:()=>authView(1),orders,admin,shop,cart:cartView,products:prodAdmin,track,settings}[v]||home;f();scrollTo(0,0)}
 
-/* ---------- express delivery ---------- */
-(function () {
-  const p = new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Kathmandu', hour: '2-digit', minute: '2-digit', hour12: false }).format(new Date()).split(':');
-  const n = +p[0] * 60 + +p[1], a = CFG.OPEN[0] * 60 + CFG.OPEN[1], b = CFG.CLOSE[0] * 60 + CFG.CLOSE[1];
-  const open = n >= a && n < b, f = t => { const h = t[0]; return ((h + 11) % 12 + 1) + ':' + String(t[1]).padStart(2, '0') + (h >= 12 ? ' PM' : ' AM'); };
-  $('#xstat').textContent = open ? 'Open' : 'Closed'; $('#xstat').className = 'pill ' + (open ? 'o' : 'c');
-  $('#xtext').textContent = open ? 'Delivering now until ' + f(CFG.CLOSE) + '.' : 'Opens daily at ' + f(CFG.OPEN) + ' (Nepal time).';
-})();
+const img=u=>/^https?:\/\//.test(u||'')?`<img src="${esc(u)}" alt="" loading="lazy" style="width:100%;aspect-ratio:1;object-fit:cover;border-radius:8px;background:#eee">`:'';
+function pcard(p){return `<div class="card">${img(p.image_url)}<b>${esc(p.name)}</b><div class="muted">${esc(p.description)}</div><div class="price">NPR ${Number(p.price_npr).toLocaleString()}</div>${p.in_stock?`<span class="tag ok">${t('instock')}</span><button class="gold" style="margin:0" onclick="buyNow('${p.id}')">${t('buy')}</button>`:`<span class="tag">${t('oos')}</span>`}</div>`}
+function addCart(id){const p=PROD[id];if(!p)return;const x=cart.find(i=>i.id===id);
+  if(x)x.qty++;else cart.push({id,name:p.name,price:Number(p.price_npr),qty:1});saveCart()}
+function buyNow(id){addCart(id);location.hash='cart'}
 
-/* ---------- shop ---------- */
-async function loadShop() {
-  if (!products.length) { const { data } = await db.from('products').select('*').order('created_at', { ascending: false }); products = data || []; }
-  drawShop();
-}
-function drawShop() {
-  const q = $('#q').value.toLowerCase();
-  const list = products.filter(p => (p.name || p.title || '').toLowerCase().includes(q));
-  $('#grid').innerHTML = list.length ? list.map(p => {
-    const price = p.price_npr ?? p.price;
-    return '<div class="p"><img loading="lazy" src="' + esc(p.image_url) + '" alt=""><b>' + esc(p.name || p.title) + '</b><span>NPR ' + esc(price) + '</span><button data-id="' + esc(p.id) + '">Buy now</button></div>';
-  }).join('') : '<p>No products found.</p>';
-}
-$('#q').oninput = drawShop;
-$('#grid').onclick = async e => {
-  const id = e.target.dataset.id; if (!id) return;
-  if (!user) return signIn();
-  const p = products.find(x => String(x.id) === id), phone = prompt('Your phone number?'), addr = phone && prompt('Delivery address (Cash on Delivery)?');
-  if (!phone || !addr) return;
-  const { data, error } = await db.from('store_orders').insert({ user_id: user.id, product_id: p.id, product_name: p.name || p.title, total: p.price_npr ?? p.price, phone, address: addr }).select('code').single();
-  alert(error ? 'Could not place order: ' + error.message : 'Order placed! Your Order ID is ' + data.code);
-};
+async function loadFeatured(){const {data}=await sb.from('products').select('*').eq('featured',true).eq('in_stock',true).limit(6);
+  if(data&&data.length&&$('#feat')){data.forEach(p=>PROD[p.id]=p);$('#feat').innerHTML=`<div class="row"><h2>${t('latest')}</h2><a href="#shop">${t('viewall')}</a></div><div class="grid" style="margin-top:10px">${data.map(pcard).join('')}</div>`}}
 
-/* ---------- request from India ---------- */
-function estimate() {
-  const p = parseFloat($('#rprice').value), q = parseInt($('#rqty').value, 10) || 1;
-  if (!(p > 0)) { $('#est').innerHTML = ''; return null; }
-  const base = Math.round(p * q * CFG.RATE), fee = Math.round(base * CFG.FEE / 100), total = base + fee + CFG.DELIVERY;
-  $('#est').innerHTML = 'Product NPR ' + base + ' + service NPR ' + fee + ' + delivery NPR ' + CFG.DELIVERY + '<br><b>Estimated total: NPR ' + total + '</b>';
-  return total;
-}
-$('#rprice').oninput = estimate; $('#rqty').oninput = estimate;
-$('#rgo').onclick = async () => {
-  const link = $('#rlink').value.trim(), msg = $('#rmsg');
-  if (!user) return signIn();
-  if (!/^https?:\/\//i.test(link) || !$('#rphone').value.trim() || !$('#raddr').value.trim()) { msg.textContent = 'Enter a product link, phone number and address.'; return; }
-  const { data, error } = await db.from('link_requests').insert({ user_id: user.id, link, qty: parseInt($('#rqty').value, 10) || 1, est_npr: estimate(), phone: $('#rphone').value.trim(), address: $('#raddr').value.trim(), note: $('#rnote').value.trim() }).select('code').single();
-  msg.textContent = error ? 'Could not send: ' + error.message : 'Request sent! Your Request ID is ' + data.code + '. Pay the NPR 35–60 confirmation amount on WhatsApp.';
-};
+async function shop(){$('#app').innerHTML='<h2>'+t('shop')+'</h2><div id="pl">…</div>';
+  const {data,error}=await sb.from('products').select('*').order('created_at',{ascending:false});
+  if(error){$('#pl').innerHTML='<p class="err">'+esc(error.message)+'</p>';return}
+  data.forEach(p=>PROD[p.id]=p);
+  $('#pl').innerHTML=data.length?`<div class="grid">${data.map(pcard).join('')}</div>`:'<p>No products yet. You can still <a href="#home">request any product link</a>.</p>'}
 
-/* ---------- tracking ---------- */
-async function track(code, out) {
-  code = code.trim(); if (!code) return;
-  const { data, error } = await db.rpc('track_code', { c: code });
-  out.textContent = error ? 'Could not check: ' + error.message : (data && data.length) ? data[0].kind + ' ' + code.toUpperCase() + ': ' + data[0].status + (data[0].quote_npr ? ' (NPR ' + data[0].quote_npr + ')' : '') : 'No order found with that ID.';
-}
-$('#tgo').onclick = () => track($('#tid').value, $('#tres'));
-$('#hgo').onclick = () => { $('#tid').value = $('#hid').value; location.hash = '#track'; track($('#hid').value, $('#tres')); };
+function chg(k,d){cart[k].qty+=d;if(cart[k].qty<=0)cart.splice(k,1);saveCart();cartView()}
+function cartView(){const tot=cart.reduce((s,i)=>s+i.price*i.qty,0);
+  $('#app').innerHTML='<h2>'+t('yourcart')+'</h2>'+(!cart.length?'<p>Your cart is empty. <a href="#shop">Go to the shop</a></p>':cart.map((i,k)=>`
+<div class="card"><div class="row"><b>${esc(i.name)}</b><span>NPR ${(i.price*i.qty).toLocaleString()}</span></div>
+<div class="row"><span class="muted">NPR ${i.price.toLocaleString()} each</span><span><button class="ghost" style="margin:0" onclick="chg(${k},-1)">−</button> &nbsp;${i.qty}&nbsp; <button class="ghost" style="margin:0" onclick="chg(${k},1)">+</button></span></div></div>`).join('')+`
+<form class="card" onsubmit="return checkout(event)"><div class="row"><b>${t('total')}</b><b>NPR ${tot.toLocaleString()}</b></div>
+<label>Phone / WhatsApp</label><input name="phone" required value="${esc(profile?.phone)}" placeholder="98XXXXXXXX">
+<label>Delivery address</label><textarea name="addr" rows="2" required>${esc(profile?.address)}</textarea>
+<label>Notes</label><textarea name="notes" rows="2"></textarea>
+<p class="muted">${t('cod')}</p>
+<button class="red">${user?t('place'):t('login')}</button><div class="err" id="e"></div></form>`)}
 
-/* ---------- my orders ---------- */
-async function loadOrders() {
-  const box = $('#olist');
-  if (!user) { box.innerHTML = '<div class="card"><p>Sign in to see your orders.</p></div>'; return; }
-  const [r, o] = await Promise.all([db.from('link_requests').select('code,link,status,created_at').order('created_at', { ascending: false }), db.from('store_orders').select('code,product_name,status,created_at').order('created_at', { ascending: false })]);
-  const rows = [...(o.data || []).map(x => ({ code: x.code, t: x.product_name, s: x.status })), ...(r.data || []).map(x => ({ code: x.code, t: x.link, s: x.status }))];
-  box.innerHTML = rows.length ? rows.map(x => '<div class="card"><b>' + esc(x.code) + '</b> · ' + esc(x.s) + '<p class="small">' + esc(x.t) + '</p></div>').join('') : '<div class="card"><p>No orders yet.</p></div>';
-}
+async function checkout(e){e.preventDefault();if(!user){location.hash='login';return false}
+  const f=new FormData(e.target);
+  const rows=cart.map(i=>({user_id:user.id,store:'myCart shop',product_url:location.origin+'/#shop',product_name:i.name,qty:i.qty,quote_npr:i.price*i.qty,status:'Confirmed',phone:f.get('phone'),address:f.get('addr'),notes:f.get('notes')}));
+  const {error}=await sb.from('orders').insert(rows);
+  if(error){$('#e').textContent='Could not place order: '+error.message;return false}
+  cart=[];saveCart();location.hash='orders';return false}
 
-authUI().then(route);
-                                                    
+function home(){$('#app').innerHTML=`
+<div class="banner"><h1>${t('h1')}</h1><p>${t('bp')}</p><a class="btn gold" href="#shop">${t('shopnow')}</a> <a class="btn ghost" style="color:#fff;border-color:#fff" href="#track">${t('trackorder')}</a></div>
+<div class="feat">
+<a class="card" href="#shop"><i>🛍️</i><span><b>${t('store')}</b><br><span class="muted">${t('stored')}</span></span></a>
+<a class="card" href="#request" onclick="document.getElementById('request').scrollIntoView();return false"><i>🔗</i><span><b>${t('req')}</b><br><span class="muted">${t('reqd')}</span></span></a>
+<a class="card" href="#track"><i>📍</i><span><b>${t('trk')}</b><br><span class="muted">${t('trkd')}</span></span></a></div>
+<div id="feat"></div>
+<form class="card" id="request" onsubmit="return submitOrder(event)" style="margin-top:16px">
+<h2>Request a product</h2>
+<label>Product link</label><input name="url" type="url" required placeholder="https://www.amazon.in/…">
+<label>Product name (optional)</label><input name="name">
+<div class="row"><div style="flex:1"><label>Quantity</label><input name="qty" type="number" min="1" max="20" value="1"></div>
+<div style="flex:2"><label>Phone / WhatsApp</label><input name="phone" required value="${esc(profile?.phone)}" placeholder="98XXXXXXXX"></div></div>
+<label>Delivery address</label><textarea name="addr" rows="2" required>${esc(profile?.address)}</textarea>
+<label>Size, colour or notes</label><textarea name="notes" rows="2"></textarea>
+<p class="muted">Payment: Cash on Delivery. We review your link and send the price in NPR before you pay anything.</p>
+<button class="red">${user?'Send order request':'Login to send request'}</button><div class="err" id="e"></div></form>`;
+  loadFeatured()}
+
+async function submitOrder(e){e.preventDefault();if(!user){location.hash='login';return false}
+  const f=new FormData(e.target),u=f.get('url');
+  const {error}=await sb.from('orders').insert({user_id:user.id,store:storeOf(u),product_url:u,product_name:f.get('name'),qty:+f.get('qty'),phone:f.get('phone'),address:f.get('addr'),notes:f.get('notes')});
+  if(error){$('#e').textContent='Could not send: '+error.message}else{location.hash='orders'}return false}
+
+function authView(reg){$('#app').innerHTML=`<form class="card" onsubmit="return auth(event,${reg})"><h2>${reg?'Create account':'Login'}</h2>
+${reg?`<label>Full name</label><input name="name" required><label>Phone</label><input name="phone" required><label>Address</label><input name="addr" required>`:''}
+<label>Email</label><input name="email" type="email" required><label>Password</label><input name="pw" type="password" minlength="6" required>
+<button class="red">${reg?'Register':'Login'}</button><div class="err" id="e"></div>
+<p class="muted">${reg?'Have an account? <a href="#login">Login</a>':'New here? <a href="#register">Register</a>'}</p></form>`}
+
+async function auth(e,reg){e.preventDefault();const f=new FormData(e.target);
+  const r=reg?await sb.auth.signUp({email:f.get('email'),password:f.get('pw'),options:{data:{full_name:f.get('name'),phone:f.get('phone'),address:f.get('addr')}}}):await sb.auth.signInWithPassword({email:f.get('email'),password:f.get('pw')});
+  if(r.error){$('#e').textContent=r.error.message;return false}
+  if(reg&&!r.data.session){$('#e').textContent='Check your email to confirm, then login.';return false}
+  location.hash='home';return false}
+
+function steps(s){if(s==='Cancelled')return '';const i=STATUSES.indexOf(s);return `<div class="steps">${STATUSES.slice(0,6).map((x,j)=>`<span class="${j<=i?'on':''}">${x}</span>`).join('')}</div>`}
+const oid=o=>String(o.id).slice(0,8).toUpperCase();
+function ocard(o){return `<div class="card"><div class="row"><b>${esc(o.product_name||o.store||'Product')}</b><span class="tag st ${o.status}">${o.status}</span></div>
+<div class="muted">${t('orderid')}: <b>${oid(o)}</b> · ${esc(o.store)} · Qty ${o.qty} · ${new Date(o.created_at).toLocaleDateString()}</div>
+<a href="${esc(o.product_url)}" target="_blank" rel="noopener">View product</a>
+<p>${o.quote_npr!=null?`Price: <b>NPR ${Number(o.quote_npr).toLocaleString()}</b> (pay on delivery)`:'Waiting for our price quote.'}</p>${steps(o.status)}</div>`}
+
+async function orders(){if(!user){location.hash='login';return}
+  const {data,error}=await sb.from('orders').select('*').eq('user_id',user.id).order('created_at',{ascending:false});
+  $('#app').innerHTML=`<h2>${t('myorders')}</h2>`+(error?`<p class="err">${esc(error.message)}</p>`:!data.length?`<p>No orders yet. <a href="#shop">Visit the shop</a> or <a href="#home">request a product link</a>.</p>`:data.map(ocard).join(''))}
+
+function track(){
+  $('#app').innerHTML=`<h2>${t('track')}</h2><form class="card" onsubmit="return doTrack(event)"><label>${t('orderid')}</label><input id="tid" placeholder="3F9A21BC" required><button class="red">${t('trackbtn')}</button></form><div id="tr"></div>`}
+async function doTrack(e){e.preventDefault();if(!user){location.hash='login';return false}
+  const k=$('#tid').value.trim().toLowerCase();
+  const {data,error}=await sb.from('orders').select('*').eq('user_id',user.id);
+  if(error){$('#tr').innerHTML='<p class="err">'+esc(error.message)+'</p>';return false}
+  const m=(data||[]).filter(o=>String(o.id).toLowerCase().startsWith(k));
+  $('#tr').innerHTML=m.length?m.map(ocard).join(''):'<p>'+t('nofound')+'</p>';return false}
+
+function settings(){const lb=(c,n)=>`<button class="${lang===c?'red':'ghost'}" style="margin:4px 4px 0 0" onclick="setLang('${c}')">${n}</button>`;
+  $('#app').innerHTML=`<h2>${t('settings')}</h2><div class="card"><b>${t('account')}</b><br>${user?`<div class="muted">${esc(profile?.full_name||'')} ${esc(user.email)}</div><button class="ghost" onclick="sb.auth.signOut();location.hash='home'">${t('logout')}</button>`:`<a class="btn red" href="#login">${t('login')}</a> <a class="btn ghost" href="#register">${t('register')}</a>`}</div>
+<div class="card"><b>${t('lang')}</b><br>${lb('en','English')}${lb('hg','Hinglish')}${lb('ne','नेपाली')}${lb('hi','हिंदी')}</div>
+${installEv?`<div class="card"><button class="gold" style="margin:0" onclick="installApp()">⬇ ${t('install')}</button></div>`:''}
+<div class="card"><a href="#orders">${t('myorders')}</a><br><a href="#track">${t('trackorder')}</a><br><a target="_blank" rel="noopener" href="https://wa.me/${WA_NUMBER}">WhatsApp</a></div>`}
+
+async function admin(){if(!isAdmin){location.hash='home';return}
+  const {data,error}=await sb.from('orders').select('*').order('created_at',{ascending:false});
+  $('#app').innerHTML=`<h2>All orders</h2>`+(error?`<p class="err">${esc(error.message)}</p>`:data.map(o=>`
+<div class="card"><div class="row"><b>${esc(o.product_name||o.store)} ×${o.qty}</b><span class="muted">${oid(o)} · ${new Date(o.created_at).toLocaleString()}</span></div>
+<a href="${esc(o.product_url)}" target="_blank" rel="noopener">${esc(o.store)} link</a>
+<div class="muted">${esc(o.phone)} · ${esc(o.address)}</div><div>${esc(o.notes)}</div>
+<div class="row"><select id="s${o.id}">${STATUSES.map(s=>`<option ${s===o.status?'selected':''}>${s}</option>`).join('')}</select>
+<input id="q${o.id}" type="number" placeholder="Quote NPR" value="${o.quote_npr??''}" style="max-width:150px"></div>
+<button onclick="save('${o.id}')">Save</button>
+<a class="btn ghost" target="_blank" rel="noopener" href="https://wa.me/${String(o.phone||'').replace(/\D/g,'').replace(/^(?=\d{10}$)/,'977')}">WhatsApp customer</a></div>`).join(''))}
+async function save(id){const q=$('#q'+id).value;
+  const {error}=await sb.from('orders').update({status:$('#s'+id).value,quote_npr:q===''?null:+q}).eq('id',id);
+  alert(error?error.message:'Saved')}
+
+async function prodAdmin(){if(!isAdmin){location.hash='home';return}
+  const {data,error}=await sb.from('products').select('*').order('created_at',{ascending:false});
+  $('#app').innerHTML=`<h2>Products</h2>
+<form class="card" onsubmit="return addProd(event)"><h3>Add a product</h3>
+<label>Name</label><input name="name" required>
+<label>Description</label><textarea name="desc" rows="2"></textarea>
+<label>Price (NPR)</label><input name="price" type="number" min="0" required>
+<label>Image link (optional)</label><input name="img" type="url" placeholder="https://…">
+<label><input type="checkbox" name="feat" style="width:auto"> Show on home page (featured)</label>
+<button class="red">Add product</button><div class="err" id="e"></div></form>`+(error?`<p class="err">${esc(error.message)}</p>`:data.map(p=>`
+<div class="card"><div class="row"><b>${esc(p.name)}</b><span>NPR ${Number(p.price_npr).toLocaleString()}</span></div>
+<div class="row"><button onclick="tog('${p.id}','in_stock',${!p.in_stock})">${p.in_stock?'Mark out of stock':'Mark in stock'}</button>
+<button class="ghost" onclick="tog('${p.id}','featured',${!p.featured})">${p.featured?'Unfeature':'Feature'}</button>
+<button class="ghost" onclick="delProd('${p.id}')">Delete</button></div></div>`).join(''))}
+async function addProd(e){e.preventDefault();const f=new FormData(e.target);
+  const {error}=await sb.from('products').insert({name:f.get('name'),description:f.get('desc'),price_npr:+f.get('price'),image_url:f.get('img')||null,featured:!!f.get('feat')});
+  if(error){$('#e').textContent=error.message;return false}prodAdmin();return false}
+async function tog(id,col,val){const {error}=await sb.from('products').update({[col]:val}).eq('id',id);if(error)alert(error.message);prodAdmin()}
+async function delProd(id){if(!confirm('Delete this product?'))return;const {error}=await sb.from('products').delete().eq('id',id);if(error)alert(error.message);prodAdmin()}
+
+const hist=[];
+async function ask(e){e.preventDefault();const i=$('#q'),t=i.value.trim();if(!t)return false;i.value='';
+  add(t,'u');hist.push({role:'user',content:t});const w=add('…','a');
+  try{const r=await fetch('/api/assistant',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({messages:hist})});
+    const d=await r.json();w.textContent=d.reply;hist.push({role:'assistant',content:d.reply})}catch{w.textContent='Assistant is unavailable. Please use WhatsApp.'}
+  return false}
+function add(t,c){const d=document.createElement('div');d.className='m '+c;d.textContent=t;$('#msgs').append(d);$('#msgs').scrollTop=1e9;return d}
