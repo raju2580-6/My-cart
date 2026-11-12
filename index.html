@@ -1,61 +1,62 @@
 <!DOCTYPE html>
-<html lang="en"><head><meta charset="utf-8">
+<html lang="en">
+<head>
+<meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>myCart – Buy from Amazon & Flipkart in Nepal</title>
-<meta name="google-site-verification" content="uiB8PUrsCRJbd91vvSUp355ybiBAIbwwwq1TvTZBESA" />
 <meta name="description" content="Paste any Amazon, Flipkart or Indian store link. myCart buys it and delivers it to your door in Nepal. Cash on Delivery.">
+<meta name="theme-color" content="#10264a">
+<meta name="robots" content="index, follow">
 <link rel="canonical" href="https://my-cart-tan-beta.vercel.app/">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="myCart">
 <meta property="og:title" content="myCart – Buy from Amazon & Flipkart in Nepal">
 <meta property="og:description" content="Indian products delivered to your door in Nepal. Cash on Delivery.">
 <meta property="og:url" content="https://my-cart-tan-beta.vercel.app/">
-<meta property="og:image" content="https://my-cart-tan-beta.vercel.app/og-image.png">
-<meta name="twitter:card" content="summary_large_image">
-<meta name="application-name" content="myCart">
-<meta name="theme-color" content="#10264a">
-<link rel="manifest" href="/manifest.webmanifest">
-<link rel="icon" href="/icon-192.png">
-<link rel="apple-touch-icon" href="/icon-192.png">
-<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&family=Hind:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/style.css">
-<script type="application/ld+json">
-{"@context":"https://schema.org","@graph":[
-{"@type":"WebSite","name":"myCart","url":"https://my-cart-tan-beta.vercel.app/"},
-{"@type":"Organization","name":"myCart","url":"https://my-cart-tan-beta.vercel.app/","areaServed":"NP"}
-]}
-</script>
-</head><body>
-<header><a class="logo" href="#home">my<b>Cart</b></a><span id="hdr"></span></header>
-<div class="sale" id="sale"></div>
-<main id="app">
-  <h1>Buy from Amazon &amp; Flipkart in Nepal – Cash on Delivery</h1>
-  <p>myCart helps you buy products from Amazon, Flipkart and other Indian stores and delivers them to your door in Nepal. You can also order from our own online store.</p>
-  <h2>How it works</h2>
-  <ol>
-    <li>Paste the product link from Amazon, Flipkart or another Indian store.</li>
-    <li>Enter your name, phone number and delivery address in Nepal.</li>
-    <li>We confirm the price in NPR and place your order.</li>
-    <li>Pay with Cash on Delivery when the product reaches you.</li>
-  </ol>
-  <h2>Frequently asked questions</h2>
-  <h3>Can I pay Cash on Delivery?</h3>
-  <p>Yes, myCart supports Cash on Delivery for orders in Nepal.</p>
-  <h3>Which stores can I order from?</h3>
-  <p>Amazon, Flipkart and other Indian online stores. Just paste the product link.</p>
-  <h3>How can I contact support?</h3>
-  <p>Use the WhatsApp support button on the site.</p>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header><a class="logo" href="#home">my<span>Cart</span></a><button id="auth">Sign in</button></header>
+
+<main>
+<section id="home">
+  <div class="hero"><h1>Shop smart. Order easy.</h1><p>Indian products sourced and delivered to your door in Nepal.</p>
+    <div class="row"><a class="btn" href="#shop">Shop</a><a class="btn ghost" href="#request">Request from India</a></div></div>
+  <div class="card"><h3>Express delivery <span id="xstat" class="pill"></span></h3><p id="xtext"></p></div>
+  <div class="card"><h3>Track your order</h3><input id="hid" placeholder="Order ID or Request ID"><button id="hgo">Track</button></div>
+  <div class="card"><h3>How it works</h3>
+    <ol><li>Pick a product or paste an Indian product link.</li><li>Enter your phone and delivery address.</li><li>Pay a small confirmation amount (NPR 35–60).</li><li>We check your payment proof and order from India.</li><li>Your product arrives at your door.</li></ol></div>
+</section>
+
+<section id="shop"><h2>Shop</h2><input id="q" placeholder="Search products"><div id="grid" class="grid"></div></section>
+
+<section id="request"><h2>Request from India</h2>
+  <div class="card"><p>Paste an Amazon, Flipkart, Meesho, Myntra or Ajio link.</p>
+  <input id="rlink" placeholder="Product link">
+  <input id="rprice" type="number" inputmode="decimal" placeholder="Price shown on the site (INR ₹)">
+  <input id="rqty" type="number" inputmode="numeric" value="1" min="1" placeholder="Quantity">
+  <div id="est" class="est"></div>
+  <input id="rphone" type="tel" placeholder="Phone number">
+  <input id="raddr" placeholder="Delivery address">
+  <input id="rnote" placeholder="Size, color or notes (optional)">
+  <button id="rgo">Submit request</button><p id="rmsg"></p>
+  <p class="small">The estimate is not final. We confirm the price after checking your link.</p></div>
+</section>
+
+<section id="track"><h2>Track order</h2><div class="card">
+  <input id="tid" placeholder="Order ID or Request ID"><button id="tgo">Track</button><p id="tres"></p></div></section>
+
+<section id="orders"><h2>My orders</h2><div id="olist"></div></section>
+
+<section id="settings"><h2>Settings</h2><div class="card"><p id="sinfo">You are not signed in.</p>
+  <button id="sauth">Sign in with Google</button></div></section>
 </main>
-<nav class="bottom" id="bn"></nav>
-<div class="fab">
-  <div id="chat"><div id="msgs"><div class="m a">नमस्ते! Ask me about products, ordering or Cash on Delivery.</div></div>
-    <form onsubmit="return ask(event)"><input id="q" placeholder="Type your question" aria-label="Question" required><button class="red">Send</button></form></div>
-  <button class="red" onclick="chat.classList.toggle('open')">AI assistant</button>
-  <a class="btn wa" id="wa" target="_blank" rel="noopener">WhatsApp support</a>
-</div>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script>window.supabase||document.write('<script src="https://unpkg.com/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"><\/script>')</script>
-<script>window.supabase||document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/supabase-js/2.45.4/umd/supabase.min.js"><\/script>')</script>
-<script src="/lang.js"></script>
-<script src="/app.js"></script>
-</body></html>
+
+<a class="wa" id="wa" target="_blank" rel="noopener">WhatsApp support</a>
+<nav><a href="#home">Home</a><a href="#shop">Shop</a><a href="#orders">Orders</a><a href="#track">Track</a><a href="#settings">Settings</a></nav>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script src="app.js"></script>
+</body>
+  </html>
+  
