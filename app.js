@@ -1,4 +1,8 @@
-if(!window.supabase){document.getElementById('app').innerHTML='<div class="card"><h2>No connection</h2><p>The page could not load fully. Please check your internet and try again.</p><button class="red" onclick="location.reload()">Retry</button></div>';throw new Error('supabase not loaded')}
+```js
+async function googleLogin(){const {error}=await sb.auth.signInWithOAuth({provider:'google',options:{redirectTo:location.origin+'/'}});if(error){const e=document.getElementById('e');if(e)e.textContent=error.message}}
+``````js
+setInterval(()=>{const f=document.querySelector('form[onsubmit^="return auth("]');if(f&&!f.querySelector('.gbtn')){const b=document.createElement('button');b.type='button';b.className='ghost gbtn';b.textContent='Continue with Google';b.onclick=googleLogin;f.appendChild(b)}},500);
+```if(!window.supabase){document.getElementById('app').innerHTML='<div class="card"><h2>No connection</h2><p>The page could not load fully. Please check your internet and try again.</p><button class="red" onclick="location.reload()">Retry</button></div>';throw new Error('supabase not loaded')}
 const SB_URL='https://dgmcsadmhbwibhcbhksf.supabase.co', SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRnbWNzYWRtaGJ3aWJoY2Joa3NmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTQwMzc0MzIsImV4cCI6MjEwOTYxMzQzMn0.ReE33H21g3YHQmTFN45Mw_eRrOYpp4cBBLrv_rteJc4', WA_NUMBER='9779713952940';
 const sb=supabase.createClient(SB_URL,SB_KEY);
 const STATUSES=['Requested','Quoted','Confirmed','Ordered','Shipped','Delivered','Cancelled'];
