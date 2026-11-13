@@ -1,28 +1,50 @@
-<!DOCTYPE html>
-<html lang="en"><head><meta charset="utf-8">
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>myCart – Buy from Amazon & Flipkart in Nepal</title>
-<meta name="description" content="Paste any Amazon, Flipkart or Indian store link. myCart buys it and delivers it to your door in Nepal. Cash on Delivery.">
-<meta name="theme-color" content="#10264a">
-<link rel="manifest" href="/manifest.webmanifest">
-<link rel="icon" href="/icon-192.png">
-<link rel="apple-touch-icon" href="/icon-192.png">
-<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&family=Hind:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/style.css">
-</head><body>
-<header><a class="logo" href="#home">my<b>Cart</b></a><span id="hdr"></span></header>
-<div class="sale" id="sale"></div>
-<main id="app"></main>
-<nav class="bottom" id="bn"></nav>
-<div class="fab">
-  <div id="chat"><div id="msgs"><div class="m a">नमस्ते! Ask me about products, ordering or Cash on Delivery.</div></div>
-    <form onsubmit="return ask(event)"><input id="q" placeholder="Type your question" aria-label="Question" required><button class="red">Send</button></form></div>
-  <button class="red" onclick="chat.classList.toggle('open')">AI assistant</button>
-  <a class="btn wa" id="wa" target="_blank" rel="noopener">WhatsApp support</a>
+<title>myCart – Amazon & Flipkart products in Nepal | Cash on Delivery</title>
+<meta name="description" content="myCart delivers Amazon, Flipkart and other Indian products to Nepal. Paste any product link, get the price in NPR, pay Cash on Delivery and track your order online.">
+<meta name="keywords" content="myCart, Amazon Nepal, Flipkart Nepal, Indian products Nepal, cash on delivery Nepal, online shopping Nepal, order from India to Nepal">
+<link rel="canonical" href="https://my-cart-tan-beta.vercel.app/">
+<meta name="theme-color" content="#0b1633">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="myCart">
+<meta property="og:title" content="myCart – Indian products delivered in Nepal">
+<meta property="og:description" content="Paste any Amazon or Flipkart link, get the NPR price, pay on delivery.">
+<meta property="og:url" content="https://my-cart-tan-beta.vercel.app/">
+<meta name="twitter:card" content="summary">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🛒</text></svg>">
+<link rel="stylesheet" href="style.css">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"OnlineStore","name":"myCart","url":"https://my-cart-tan-beta.vercel.app/","description":"Indian products from Amazon, Flipkart and more delivered in Nepal with Cash on Delivery.","areaServed":"NP","paymentAccepted":"Cash on Delivery"}</script>
+</head>
+<body>
+<header class="top"><a class="brand" href="#home">my<b>Cart</b></a><div id="hdr"></div></header>
+<div id="sale"></div>
+<main id="app"><p style="padding:20px">Loading…</p></main>
+<noscript><p style="padding:20px">myCart delivers Amazon, Flipkart and Indian products to Nepal. Please enable JavaScript to shop.</p></noscript>
+<nav id="bn" aria-label="Main menu"></nav>
+
+<div id="chat" role="dialog" aria-label="AI assistant">
+<div class="ch"><b>AI assistant</b><button type="button" id="cx" aria-label="Close">✕</button></div>
+<div id="cm"></div>
+<form id="cf"><input id="ci" placeholder="Type your question" autocomplete="off"><button class="red">Send</button></form>
 </div>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script>window.supabase||document.write('<script src="https://unpkg.com/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"><\/script>')</script>
-<script>window.supabase||document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/supabase-js/2.45.4/umd/supabase.min.js"><\/script>')</script>
-<script src="/lang.js"></script>
-<script src="/app.js"></script>
-</body></html>
+<div class="fabs"><button type="button" class="fab" id="aib">AI assistant</button><a class="fab" id="wa" target="_blank" rel="noopener">WhatsApp support</a></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="lang.js"></script>
+<script src="app.js"></script>
+<script>
+(function(){
+var c=document.getElementById('chat'),m=document.getElementById('cm'),f=document.getElementById('cf'),i=document.getElementById('ci'),h=[];
+function add(t,u){var d=document.createElement('div');d.className='m'+(u?' u':'');d.textContent=t;m.appendChild(d);m.scrollTop=m.scrollHeight;return d}
+function tog(o){c.classList.toggle('open',o);document.body.classList.toggle('chatopen',o);if(o&&!m.children.length)add('नमस्ते! Ask me about products, ordering or Cash on Delivery.')}
+document.getElementById('aib').onclick=function(){tog(true)};
+document.getElementById('cx').onclick=function(){tog(false)};
+f.onsubmit=async function(e){e.preventDefault();var q=i.value.trim();if(!q)return;i.value='';add(q,1);h.push({role:'user',content:q});var w=add('…');
+try{var r=await fetch('/api/assistant',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({messages:h})});var d=await r.json();var a=d.reply||'Sorry, please try again.';w.textContent=a;h.push({role:'assistant',content:a})}catch(x){w.textContent='Assistant is unavailable. Please use WhatsApp.'}};
+})();
+</script>
+</body>
+</html>
