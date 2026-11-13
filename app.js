@@ -147,4 +147,5 @@ async function save(id){const q=$('#q'+id).value;
   const {error}=await sb.from('orders').update({status:$('#s'+id).value,quote_npr:q===''?null:+q}).eq('id',id);
   alert(error?error.message:'Saved')}
 
-render();
+render();function home(){$('#app').innerHTML=`
+<input id="hq" type="search" placeholder="🔍 Search products…" oninput="home...
