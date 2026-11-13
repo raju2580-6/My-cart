@@ -77,8 +77,7 @@ async function homeSearch(q){const s=(q||'').trim().toLowerCase(),r=$('#hres'),f
   if(!s){r.innerHTML='';if(f)f.style.display='';return}
   await ensureShop();const h=$('#hq');if(!h||h.value.trim().toLowerCase()!==s)return;
   if(f)f.style.display='none';const list=filterP(s);
-  r.innerHTML=list.length?` ${list.map(pcard).join('')} `:' No products found. You can request any product link below.'}function home(){$('#app').innerHTML=`
-<input id="hq" type="search" placeholder="🔍 Search products…" oninput="home...const EXPRESS_OPEN=false;
+  r.innerHTML=list.length?` ${list.map(pcard).join('')} `:' No products found. You can request any product link below.'}const EXPRESS_OPEN=false;
 function home(){$('#app').innerHTML=`
 <input id="hq" type="search" placeholder="🔍 Search products…" oninput="homeSearch(this.value)" style="margin-bottom:10px">
 ${t('h1')} ${t('bp')} ${t('shopnow')} ${t('trackorder')}
