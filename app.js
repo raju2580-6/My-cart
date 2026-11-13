@@ -1,4 +1,4 @@
-async function googleLogin(){const {error}=await sb.auth.signInWithOAuth({provider:'google',options:{redirectTo:location.origin+'/'}});if(error){const e=document.getElementById('e');if(e)e.textContent=error.message}}
+async function googleLogin(){const {error}=await sb.auth.signInWithOAuth({provider:'google',options:{redirect To:location.origin+'/'}});if(error){const e=document.getElementById('e');if(e)e.textContent=error.message}}
 
 setInterval(()=>{const f=document.querySelector('form[onsubmit^="return auth("]');if(f&&!f.querySelector('.gbtn')){const b=document.createElement('button');b.type='button';b.className='ghost gbtn';b.textContent='Continue with Google';b.onclick=googleLogin;f.appendChild(b)}},500);
 if(!window.supabase){document.getElementById('app').innerHTML='<div class="card"><h2>No connection</h2><p>The page could not load fully. Please check your internet and try again.</p><button class="red" onclick="location.reload()">Retry</button></div>';throw new Error('supabase not loaded')}
@@ -225,4 +225,4 @@ async function tog(id,col,val){const {error}=await sb.from('products').update({[
   if(error){alert(error.message);return}prodAdmin()}
 async function delProd(id){if(!confirm('Delete this product?'))return;
   const {error}=await sb.from('products').delete().eq('id',id);
-  if(error){alert(error.message);return}prodAdmin()}
+  if(error){alert(error.message);return}prodAdmin()}document.addEventListener('click',function(e){var im=e.target;if(im.tagName==='IMG'&&im.closest('.card')){var z=document.createElement('div');z.id='zoom';z.innerHTML='<img src="'+im.src+'" alt=""><span>✕</span>';z.onclick=function(){z.remove()};document.body.appendChild(z)}});
