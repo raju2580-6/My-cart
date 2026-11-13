@@ -164,4 +164,65 @@ async function admin(){if(!isAdmin){location.hash='home';return}
 <a class="btn ghost" target="_blank" rel="noopener" href="https://wa.me/${String(o.phone||'').replace(/\D/g,'').replace(/^(?=\d{10}$)/,'977')}">WhatsApp customer</a></div>`).join(''))}
 async function save(id){const q=$('#q'+id).value;
   const {error}=await sb.from('orders').update({status:$('#s'+id).value,quote_npr:q===''?null:+q}).eq('id',id);
-  alert(error?error.message:'Saved')}
+  alert(error?error.message:'Saved')}/* ---------- PRODUCTS (admin) with photo upload from gallery ---------- */
+function shrink(file,max=1000){return new Promise((res,rej)=>{const im=new Image(),u=URL.createObjectURL(file);
+  im.onload=()=>{const r=Math.min(1,max/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=Math.round(im.width*r);c.height=Math.round(im.height*r);c.getContext('2d').drawImage(im,0,0,c.width,c.height);URL.revokeObjectURL(u);c.toBlob(b=>b?res(b):rej(new Error('Could not read photo')),'image/jpeg',0.82)};
+  im.onerror=()=>rej(new Error('Could not read this photo. Try another one.'));im.src=u})}
+
+var bulk=[],done=new Set();
+function rowHTML(i,f){return `<div class="card" id="r${i}">${f?`<img src="${URL.createObjectURL(f)}" alt="" style="width:80px;height:80px;object-fit:cover;border-radius:8px">`:'<div class="muted">No photo</div>'}
+<label>Name</label><input id="bn${i}"><label>Price (NPR)</label><input id="bp${i}" type="number" min="0">
+<label>Sizes (example: S,M,L,XL). Leave empty if no sizes</label><input id="bs${i}" placeholder="S,M,L,XL"></div>`}
+function pickFiles(inp){[...inp.files].forEach(f=>{bulk.push(f);$('#rows').insertAdjacentHTML('beforeend',rowHTML(bulk.length-1,f))});inp.value=''}
+function addBlank(){bulk.push(null);$('#rows').insertAdjacentHTML('beforeend',rowHTML(bulk.length-1,null))}
+
+async function prodAdmin(){if(!isAdmin){location.hash='home';return}
+  shopData=[];bulk=[];done=new Set();
+  const {data,error}=await sb.from('products').select('*').order('created_at',{ascending:false});
+  if(data)data.forEach(p=>PROD[p.id]=p);
+  $('#app').innerHTML=`<h2>Products</h2>
+<div class="card"><h3>Add products (many at once)</h3>
+<p class="muted">Choose many photos from your gallery. For each photo, type the name, price and sizes. Then tap "Add all products".</p>
+<label>Choose photos</label><input type="file" accept="image/*" multiple onchange="pickFiles(this)">
+<button class="ghost" type="button" onclick="addBlank()">+ Add a product without photo</button>
+<div id="rows"></div>
+<label><input type="checkbox" id="bf" style="width:auto"> Show all these on home page (featured)</label>
+<button class="red" id="ab" onclick="addAll()">Add all products</button><div class="err" id="e"></div></div>`+(error?`<p class="err">${esc(error.message)}</p>`:data.map(p=>`
+<div class="card">${p.image_url?`<img src="${esc(p.image_url)}" alt="" style="width:70px;height:70px;object-fit:cover;border-radius:8px;margin-bottom:6px">`:''}<div class="row"><b>${esc(p.name)}</b><span>NPR ${Number(p.price_npr).toLocaleString()}</span></div>
+${(p.sizes&&p.sizes.length)?`<div class="muted">Tap a size to mark it out of stock (✕) or back in stock</div><div>${p.sizes.map((z,k)=>`<button class="${z.in?'':'ghost'}" style="margin:2px;padding:6px 12px" onclick="tsize('${p.id}',${k})">${esc(z.s)}${z.in?'':' ✕'}</button>`).join('')}</div>`:''}
+<div class="row"><button onclick="tog('${p.id}','in_stock',${!p.in_stock})">${p.in_stock?'Mark out of stock':'Mark in stock'}</button>
+<button class="ghost" onclick="tog('${p.id}','featured',${!p.featured})">${p.featured?'Unfeature':'Feature'}</button>
+<button class="ghost" onclick="delProd('${p.id}')">Delete</button></div></div>`).join(''))}
+
+async function addAll(){const er=$('#e'),b=$('#ab');er.textContent='';
+  const items=[];
+  for(let i=0;i<bulk.length;i++){
+    if(done.has(i))continue;
+    const n=($('#bn'+i)?.value||'').trim(),pr=$('#bp'+i)?.value;
+    if(!n||pr==='')continue;
+    items.push(i)}
+  if(!items.length){er.textContent='Add at least one product with name and price.';return}
+  b.disabled=true;let ok=0;
+  for(const i of items){
+    b.textContent='Adding '+(ok+1)+' of '+items.length+'…';
+    try{
+      let url=null;const f=bulk[i];
+      if(f){const blob=await shrink(f);const path=Date.now()+'-'+i+'.jpg';
+        const up=await sb.storage.from('product-images').upload(path,blob,{contentType:'image/jpeg'});
+        if(up.error)throw up.error;
+        url=sb.storage.from('product-images').getPublicUrl(path).data.publicUrl}
+      const sz=($('#bs'+i).value||'').split(',').map(x=>x.trim()).filter(Boolean).map(s=>({s,in:true}));
+      const {error}=await sb.from('products').insert({name:$('#bn'+i).value.trim(),price_npr:+$('#bp'+i).value,image_url:url,sizes:sz,in_stock:true,featured:$('#bf').checked,description:''});
+      if(error)throw error;
+      done.add(i);ok++
+    }catch(x){er.textContent='Could not add: '+(x.message||x);b.disabled=false;b.textContent='Add all products';return}}
+  prodAdmin()}
+
+async function tsize(id,k){const p=PROD[id];if(!p||!p.sizes)return;const sz=p.sizes.map(x=>({...x}));sz[k].in=!sz[k].in;
+  const {error}=await sb.from('products').update({sizes:sz}).eq('id',id);
+  if(error){alert(error.message);return}prodAdmin()}
+async function tog(id,col,val){const {error}=await sb.from('products').update({[col]:val}).eq('id',id);
+  if(error){alert(error.message);return}prodAdmin()}
+async function delProd(id){if(!confirm('Delete this product?'))return;
+  const {error}=await sb.from('products').delete().eq('id',id);
+  if(error){alert(error.message);return}prodAdmin()}
