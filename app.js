@@ -241,4 +241,38 @@ function calcBox(){
 setInterval(calcBox,500);function expressBox(){const h=new Date(new Date().toLocaleString('en-US',{timeZone:'Asia/Kathmandu'})).getHours(),open=h>=10&&h<18;
   return ` 🚚 Express Delivery${open?'Open':'Closed'} ${open?'Order now for fast delivery.':'Opens daily 10 AM to 6 PM.'} `}
 const _home=home;
-home=function(){_home();const f=document.querySelector('.feat');if(f)f.insertAdjacentHTML('afterend',expressBox())};
+home=function(){_home();const f=document.querySelector('.feat');if(f)f.insertAdjacentHTML('afterend',expressBox())};var MC={rate:1.6,each:150,offerQty:5,offerChg:400};
+function mk(tag,cls,txt){const e=document.createElement(tag);if(cls)e.className=cls;if(txt!=null)e.textContent=txt;return e}
+function expressBox(){return ''}
+function calcBox(){
+  const hr=new Date(new Date().toLocaleString('en-US',{timeZone:'Asia/Kathmandu'})).getHours(),open=hr>=10&&hr<18;
+  const feat=document.querySelector('#app .feat');
+  if(feat){
+    let ex=document.getElementById('exp');
+    if(!ex){ex=mk('div','card');ex.id='exp';feat.after(ex)}
+    if(ex.dataset.s!==String(open)){
+      ex.dataset.s=String(open);
+      ex.className='card '+(open?'open':'closed');
+      const sp=mk('span');
+      sp.append(mk('b','','Express Delivery'),document.createTextNode(' '),mk('span','tag'+(open?' ok':''),open?'Open':'Closed'),mk('br'),mk('span','muted',open?'Order now for fast delivery.':'Opens daily 10 AM to 6 PM (Nepal time).'));
+      ex.replaceChildren(mk('i','','🚚'),sp)}}
+  const f=document.getElementById('request');
+  if(f&&!document.getElementById('calc')){
+    const notes=f.querySelector('[name=notes]'),q=f.querySelector('[name=qty]');
+    if(!notes||!q)return;
+    const inp=mk('input');inp.id='inr';inp.type='number';inp.min='0';inp.placeholder='e.g. 1000';
+    const box=mk('div','card');box.id='calc';box.style.background='#fff8e1';
+    notes.after(mk('label','','Price on the Indian site (INR, per item)'),inp,box);
+    const row=(a,b)=>{const r=mk('div','row');r.append(mk('span','',a),mk('b','',b));return r};
+    const upd=()=>{
+      const p=+inp.value;box.replaceChildren();
+      if(!p){box.append(mk('div','muted','Enter the INR price to see your estimate in NPR.'));return}
+      const n=Math.max(1,Math.floor(+q.value||1)),each=Math.round(p*MC.rate),items=each*n,offer=n>=MC.offerQty,chg=offer?MC.offerChg:MC.each*n;
+      box.append(
+        row('Items ('+n+' × NPR '+each.toLocaleString()+')','NPR '+items.toLocaleString()),
+        row('Delivery + platform charge'+(offer?' (special offer)':''),'NPR '+chg.toLocaleString()),
+        mk('div','muted',offer?'Special offer: '+MC.offerQty+' or more items at once, total charge only NPR '+MC.offerChg+' (normally NPR '+(MC.each*n).toLocaleString()+').':'Order '+MC.offerQty+' or more items at once and the total charge drops to NPR '+MC.offerChg+'.'),
+        row('Estimated total','NPR '+(items+chg).toLocaleString()),
+        mk('div','muted','This is an estimate. We confirm the final price before you pay.'))};
+    inp.addEventListener('input',upd);q.addEventListener('input',upd);upd()}}
+setInterval(function(){calcBox()},500);
