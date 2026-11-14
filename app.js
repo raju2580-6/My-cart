@@ -242,3 +242,17 @@ setInterval(calcBox,500);function expressBox(){const h=new Date(new Date().toLoc
   return ` 🚚 Express Delivery${open?'Open':'Closed'} ${open?'Order now for fast delivery.':'Opens daily 10 AM to 6 PM.'} `}
 const _home=home;
 home=function(){_home();const f=document.querySelector('.feat');if(f)f.insertAdjacentHTML('afterend',expressBox())};
+const INR_NPR=1.6,CHG_EACH=150,OFFER_QTY=5,OFFER_CHG=400;
+function calcBox(){
+  const f=document.getElementById('request');if(!f||document.getElementById('calc'))return;
+  const q=f.querySelector('[name=qty]');if(!q)return;
+  f.querySelector('[name=notes]').insertAdjacentHTML('afterend','<input id="inr" type="number" min="0" placeholder="e.g. 1000"> Enter the INR price to see your estimate in NPR.');
+  const upd=()=>{const p=+document.getElementById('inr').value,n=Math.max(1,+q.value||1),c=document.getElementById('calc');
+    if(!p){c.innerHTML=' Enter the INR price to see your estimate in NPR.';return}
+    const items=Math.round(p*INR_NPR*n),offer=n>=OFFER_QTY,chg=offer?OFFER_CHG:CHG_EACH*n,tot=items+chg;
+    c.innerHTML=' Items ('+n+' × NPR '+Math.round(p*INR_NPR).toLocaleString()+')NPR '+items.toLocaleString()+''
+    +' Delivery + platform charge'+(offer?' Special offer':'')+'NPR '+chg.toLocaleString()+''
+    +(offer?' Order '+OFFER_QTY+' or more items at once: total charge only NPR '+OFFER_CHG+' (normal NPR '+(CHG_EACH*n).toLocaleString()+').':' Order '+OFFER_QTY+' items at once and the total charge drops to NPR '+OFFER_CHG+'.')
+    +' Estimated totalNPR '+tot.toLocaleString()+' This is an estimate. We confirm the final price before you pay.'};
+  document.getElementById('inr').addEventListener('input',upd);q.addEventListener('input',upd)}
+setInterval(calcBox,500);
