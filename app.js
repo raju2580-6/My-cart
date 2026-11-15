@@ -304,4 +304,28 @@ async function phUpload(id,inp){
     const p=phData.find(x=>x.id==id);if(p)p.image_url=url;
     phDraw();
   }catch(e){if(s)s.textContent='Failed: '+(e.message||e)}
-  inp.value=''}
+  inp.value=''}/* ---------- Photo button on each product card (Products page) ---------- */
+const _prodAdmin=prodAdmin;
+prodAdmin=async function(){
+  await _prodAdmin();
+  document.querySelectorAll('#app button[onclick^="delProd("]').forEach(b=>{
+    const m=b.getAttribute('onclick').match(/'([^']+)'/);if(!m)return;
+    const row=b.parentElement;if(row.querySelector('.pcbtn'))return;
+    const has=!!b.closest('.card').querySelector('img');
+    row.insertAdjacentHTML('afterbegin',`<label class="btn gold pcbtn" style="margin:0;cursor:pointer">${has?'Change photo':'Add photo'}<input type="file" accept="image/*" style="display:none" onchange="pcPhoto('${m[1]}',this)"></label>`);
+  });
+};
+async function pcPhoto(id,inp){
+  const f=inp.files[0];if(!f)return;
+  try{
+    inp.parentElement.firstChild.textContent='Uploading…';
+    const blob=await shrink(f);
+    const path=id+'-'+Date.now()+'.jpg';
+    const up=await sb.storage.from('product-images').upload(path,blob,{contentType:'image/jpeg'});
+    if(up.error)throw up.error;
+    const url=sb.storage.from('product-images').getPublicUrl(path).data.publicUrl;
+    const r=await sb.from('products').update({image_url:url}).eq('id',id);
+    if(r.error)throw r.error;
+    prodAdmin();
+  }catch(e){alert('Photo failed: '+(e.message||e));prodAdmin()}
+}
