@@ -275,4 +275,33 @@ function calcBox(){
         row('Estimated total','NPR '+(items+chg).toLocaleString()),
         mk('div','muted','This is an estimate. We confirm the final price before you pay.'))};
     inp.addEventListener('input',upd);q.addEventListener('input',upd);upd()}}
-setInterval(function(){calcBox()},500);
+setInterval(function(){calcBox()},500);/* ---------- PHOTOS: add or change a photo on existing products ---------- */
+setInterval(()=>{const h=document.getElementById('hdr');if(h&&isAdmin&&!h.querySelector('.phchip'))h.insertAdjacentHTML('beforeend',' <a class="chip phchip" href="#photos">Photos</a>')},500);
+addEventListener('hashchange',()=>{if(location.hash==='#photos')photoAdmin()});
+var phData=[];
+async function photoAdmin(){
+  if(!isAdmin){location.hash='home';return}
+  $('#app').innerHTML='<h2>Product photos</h2><input id="phq" type="search" placeholder="🔍 Search products…" oninput="phDraw()" style="margin-bottom:10px"><div id="phl">Loading…</div>';
+  const {data,error}=await sb.from('products').select('*').order('created_at',{ascending:false});
+  if(error){$('#phl').innerHTML='<p class="err">'+esc(error.message)+'</p>';return}
+  phData=data||[];phDraw()}
+function phDraw(){
+  const q=($('#phq')?.value||'').trim().toLowerCase();
+  const list=phData.filter(p=>!q||(p.name||'').toLowerCase().includes(q)).sort((a,b)=>(a.image_url?1:0)-(b.image_url?1:0));
+  $('#phl').innerHTML=list.length?list.map(p=>`<div class="card"><div style="display:flex;gap:10px;align-items:center">${p.image_url?`<img src="${esc(p.image_url)}" alt="" style="width:64px;height:64px;object-fit:cover;border-radius:8px">`:'<div style="width:64px;height:64px;border-radius:8px;background:#eee"></div>'}<b>${esc(p.name)}</b></div>
+<label class="btn gold" style="display:block;text-align:center;margin-top:8px">${p.image_url?'Change photo':'Add photo'}<input type="file" accept="image/*" style="display:none" onchange="phUpload('${p.id}',this)"></label><div class="muted" id="phs${p.id}"></div></div>`).join(''):'<p>No products found.</p>'}
+async function phUpload(id,inp){
+  const f=inp.files[0];if(!f)return;const s=document.getElementById('phs'+id);
+  try{
+    s.textContent='Uploading…';
+    const blob=await shrink(f);
+    const path=id+'-'+Date.now()+'.jpg';
+    const up=await sb.storage.from('product-images').upload(path,blob,{contentType:'image/jpeg'});
+    if(up.error)throw up.error;
+    const url=sb.storage.from('product-images').getPublicUrl(path).data.publicUrl;
+    const r=await sb.from('products').update({image_url:url}).eq('id',id);
+    if(r.error)throw r.error;
+    const p=phData.find(x=>x.id==id);if(p)p.image_url=url;
+    phDraw();
+  }catch(e){if(s)s.textContent='Failed: '+(e.message||e)}
+  inp.value=''}
