@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://my-cart-tan-beta.vercel.app/sitemap.xml
