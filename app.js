@@ -77,8 +77,8 @@ function cartView(){const tot=cart.reduce((s,i)=>s+i.price*i.qty,0);
 
 async function checkout(e){e.preventDefault();if(!user){location.hash='login';return false}
   const f=new FormData(e.target);
-  const rows=cart.map(i=>({user_id:user.id,store:'myCart shop',product_url:location.origin+'/#shop',product_name:i.name+(i.size?' - Size '+i.size:''),qty:i.qty,quote_npr:i.price*i.qty,status:'Confirmed',phone:f.get('phone'),address:f.get('addr'),notes:f.get('notes')}));
-  const {error}=await sb.from('orders').insert(rows);
+    const items=cart.map(i=>({id:i.id,qty:i.qty,size:i.size||''}));
+  const {error}=await sb.rpc('place_cart_order',{items:items,p_phone:f.get('phone'),p_addr:f.get('addr'),p_notes:f.get('notes'),p_origin:location.origin});
   if(error){$('#e').textContent='Could not place order: '+error.message;return false}
   cart=[];saveCart();location.hash='orders';return false}
 
